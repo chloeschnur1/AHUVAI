@@ -1,0 +1,15 @@
+<div class="auth-card" data-auth="invite">
+  <span class="eyebrow center-block">Private Family Portal</span>
+  <h1>Create your account</h1>
+  <p class="lede" data-invite-intro>Checking your invitation…</p>
+  <form data-invite-form hidden novalidate>
+    <div class="notice error" role="alert" data-form-error></div>
+    <label class="field"><span class="label">Email address</span><input class="input" type="email" name="email" autocomplete="username" readonly></label>
+    <label class="field"><span class="label">Your name</span><input class="input" type="text" name="name" autocomplete="name" required maxlength="120"></label>
+    <label class="field"><span class="label">Choose a password</span><input class="input" type="password" name="password" autocomplete="new-password" required minlength="10">
+      <span class="hint">At least 10 characters. A short phrase is easy to remember and hard to guess.</span></label>
+    <label class="check field"><input type="checkbox" name="consent" required><span>I am the parent or legal guardian of the children I will add, and I have read and accept the <a href="/privacy" target="_blank" rel="noopener">privacy notice</a>.</span></label>
+    <button class="btn btn-primary" type="submit" data-submit>Create Account</button>
+  </form>
+  <p class="auth-links" data-invite-signin hidden><a href="/portal">Go to sign in</a></p>
+</div>

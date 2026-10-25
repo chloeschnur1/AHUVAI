@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{title}}</title>
+<meta name="description" content="{{description}}">
+{{robots}}
+<link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/fonts/cormorant-garamond-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/css/site.css">
+<script src="/js/api.js" defer></script>
+<script src="/js/site.js" defer></script>
+</head>
+<body class="site">
+<a class="skip-link" href="#main">Skip to content</a>
+{{> header}}
+<main id="main">
+{{body}}
+</main>
+{{> footer}}
+</body>
+</html>

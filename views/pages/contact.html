@@ -1,0 +1,36 @@
+<section class="page-hero">
+  <div class="wrap reveal">
+    <span class="eyebrow">Contact</span>
+    <h1>We would be glad to hear from you.</h1>
+    <div class="divider"><svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C13 9 15 11 24 12C15 13 13 15 12 24C11 15 9 13 0 12C9 11 11 9 12 0Z" fill="currentColor"/></svg></div>
+    <p class="lede">For questions about AHUVAI, or to arrange a private conversation, please write to us.</p>
+  </div>
+</section>
+
+<section class="section-tight">
+  <div class="wrap contact-grid">
+    <div class="reveal">
+      <!--if-contact-email--><div class="contact-detail"><span class="label">Email</span><a href="mailto:{{contactEmail}}">{{contactEmail}}</a></div><!--end-->
+      <div class="contact-detail"><span class="label">Planning a journey?</span><p><a href="/begin">Begin Your Family Experience</a></p></div>
+      <div class="contact-detail"><span class="label">Existing families</span><p><a href="/portal">Private Family Portal</a></p></div>
+    </div>
+    <div class="form-card reveal" data-form-wrap>
+      <form data-api-form="/api/contact" novalidate>
+        <div class="notice error" role="alert" data-form-error></div>
+        <label class="field"><span class="label">Your name</span><input class="input" type="text" name="name" autocomplete="name" required maxlength="120"></label>
+        <label class="field"><span class="label">Email address</span><input class="input" type="email" name="email" autocomplete="email" required maxlength="200"></label>
+        <label class="field"><span class="label">Subject <span class="optional">optional</span></span><input class="input" type="text" name="subject" maxlength="200"></label>
+        <label class="field"><span class="label">Message</span><textarea class="input" name="message" required maxlength="4000"></textarea>
+          <span class="hint">Please don't include children's medical information in this form.</span></label>
+        <div class="hp" aria-hidden="true"><label>Leave this empty<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+        <button class="btn btn-primary" type="submit" data-submit>Send Message <svg class="arrow" viewBox="0 0 18 10" aria-hidden="true"><path d="M0 5h16M12 1l4 4-4 4" fill="none" stroke="currentColor"/></svg></button>
+      </form>
+      <div class="thanks-panel" data-form-thanks hidden tabindex="-1">
+        <span class="eyebrow">Thank You</span>
+        <h2>Your message has been received.</h2>
+        <div class="divider"><svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C13 9 15 11 24 12C15 13 13 15 12 24C11 15 9 13 0 12C9 11 11 9 12 0Z" fill="currentColor"/></svg></div>
+        <p class="lede center">We will reply to you personally.</p>
+      </div>
+    </div>
+  </div>
+</section>

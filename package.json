@@ -1,0 +1,29 @@
+{
+  "name": "ahuvai",
+  "version": "1.0.0",
+  "description": "AHUVAI Private Family Concierge — website, family portal and administrator dashboard",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "seed:demo": "node scripts/seed-demo.js",
+    "create-admin": "node scripts/create-admin.js",
+    "generate-key": "node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\"",
+    "test": "node --test --test-concurrency=1 tests/*.test.js",
+    "test:browser": "node tests/browser-flow.js"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "express": "^4.22.3",
+    "express-rate-limit": "^7.5.1",
+    "helmet": "^8.3.0",
+    "nodemailer": "^10.2.1",
+    "pg": "^8.23.1",
+    "qrcode": "^1.5.4"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  }
+}
