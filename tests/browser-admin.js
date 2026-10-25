@@ -191,6 +191,11 @@ function totpFromPage(secret) {
     await adm.waitForSelector('[data-review]');
     await adm.click('[data-review="reviewed"]');
     await toast(adm, /Reviewed/);
+    await adm.emulateMedia({ media: 'print' });
+    assert.equal(await adm.isVisible('.sidebar'), false, 'print view hides the sidebar');
+    assert.equal(await adm.isVisible('[data-notes]'), false, 'print view never includes private notes');
+    assert.equal(await adm.isVisible('.print-note'), true);
+    await adm.emulateMedia({ media: 'screen' });
     await adm.click('.child-tabs a:has-text("Benji")');
     await adm.waitForSelector('.family-hero h1:has-text("Benjamin Cohen")');
     await adm.fill('[data-add-note] textarea', 'Temporary note');

@@ -122,6 +122,9 @@ problem listed there is fixed.
 | **Settings** | Password, two-step verification, other administrators, data retention, demonstration-data removal, activity log |
 
 **Good to know**
+- **Print / Save as PDF** on any submitted child profile gives you a clean copy to brief a
+  caregiver. It leaves out your private notes, carries a confidentiality line, and the printing is
+  recorded in the activity log. Please share printed or PDF copies only with the caregiver who needs them.
 - Parents' answers are **read-only** in your dashboard. You can't change them by accident.
 - You see exactly what a parent **submitted**. If they edit afterward, you keep seeing the submitted
   version, with a note that changes are pending, until they resubmit.

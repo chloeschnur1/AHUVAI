@@ -390,6 +390,7 @@
         <div class="body">${sec[s.key] ? `<dl>${sec[s.key]}</dl>` : '<p class="muted">No answers given.</p>'}</div></section>`).join('');
     }
     render(`<a class="crumb" href="#/families/${d.family.id}">← ${esc(d.family.family_name)}</a>
+      <img src="/img/ahuvai-logo.jpg" alt="AHUVAI — Private Family Concierge" class="print-only print-logo" width="1634" height="444">
       ${tabs}
       <div class="family-hero">
         <span class="eyebrow">${esc(d.family.family_name)} · Child Profile</span>
@@ -403,12 +404,14 @@
           <div><dt>Health consent</dt><dd>${d.health_consent_at ? date(d.health_consent_at) : '—'}</dd></div>
         </dl>
         ${d.parentEditing ? '<div class="notice warning">The parent is editing this profile. You are seeing the version they last submitted; changes appear once they resubmit.</div>' : ''}
-        ${a ? `<div class="actions-row"><span class="readonly-tag">Your review:</span><div class="review-buttons">
+        ${a ? `<div class="actions-row no-print"><span class="readonly-tag">Your review:</span><div class="review-buttons">
           ${['ready_for_review', 'more_info_needed', 'reviewed'].map((k) => `<button class="btn btn-small" data-review="${k}" aria-pressed="${c.review_status === k}">${REVIEW[k]}</button>`).join('')}
         </div></div>` : ''}
-        <p class="readonly-tag">Parent answers are read-only — they cannot be changed from this dashboard.</p>
+        <p class="readonly-tag no-print">Parent answers are read-only — they cannot be changed from this dashboard.</p>
+        ${a ? '<div class="actions-row no-print"><button class="btn btn-small btn-quiet" data-print>Print / Save as PDF</button></div>' : ''}
+        <p class="print-only print-note">Private &amp; confidential — prepared by AHUVAI for the care of this child. Please store securely and destroy when no longer needed.</p>
       </div>
-      <div class="grid-main"><div>${body}</div>${notesPanel(d.notes, { family_id: d.family.id, child_id: c.id })}</div>`);
+      <div class="grid-main print-single"><div>${body}</div>${notesPanel(d.notes, { family_id: d.family.id, child_id: c.id })}</div>`);
     view().dataset.child = c.id;
   }
 
@@ -519,6 +522,11 @@
       }
       if (t.dataset.resetLink !== undefined) {
         inviteResult(await A.post(`/api/admin/families/${currentId()}/reset-link`));
+        return;
+      }
+      if (t.dataset.print !== undefined) {
+        A.post(`/api/admin/children/${view().dataset.child}/printed`).catch(() => {});
+        window.print();
         return;
       }
       if (t.dataset.review) {

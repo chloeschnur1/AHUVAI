@@ -148,3 +148,26 @@ table.data .sub { display: block; font-size: .78rem; color: var(--ink-soft); }
   .profile-section dd { margin-bottom: 10px; }
 }
 .inline-form.filters { display: flex; }
+
+/* Printing a child profile (Print / Save as PDF) */
+.print-only { display: none; }
+@media print {
+  @page { margin: 16mm 14mm; }
+  body.admin, .admin { background: #fff !important; }
+  .admin-shell { display: block; }
+  .sidebar, .crumb, .child-tabs, .no-print, .toast, [data-notes], .menu-btn { display: none !important; }
+  .main { padding: 0; }
+  .print-only { display: block; }
+  .print-logo { height: 34px; width: auto; margin: 0 0 18px; }
+  .print-note { font-size: 9pt; color: #555; margin-top: 12px; }
+  .grid-main.print-single { display: block; }
+  .family-hero, .profile-section { border: 1px solid #ddd !important; box-shadow: none; break-inside: avoid; }
+  .family-hero { padding: 18px 20px; border-top: 2px solid #B9A078 !important; }
+  .family-hero h1 { font-size: 20pt; margin-bottom: 10px; }
+  .profile-section { margin-bottom: 8px; }
+  .profile-section > header { padding: 8px 14px; }
+  .profile-section .body { padding: 10px 14px; }
+  .profile-section dl { grid-template-columns: 150px 1fr; font-size: 9.5pt; gap: 4px 14px; }
+  .badge, .flag, .pill { border: 1px solid #ccc !important; background: #fff !important; }
+  a { color: inherit; text-decoration: none; }
+}

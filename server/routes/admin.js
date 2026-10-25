@@ -480,6 +480,14 @@ router.get('/children/:id', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+router.post('/children/:id/printed', async (req, res, next) => {
+  try {
+    const id = v.uuid(req.params.id);
+    await q(req, (c) => db.audit(c, req.actor, 'child.printed', 'child', id));
+    res.json({ ok: true });
+  } catch (err) { next(err); }
+});
+
 router.patch('/children/:id/review', async (req, res, next) => {
   try {
     const id = v.uuid(req.params.id);
