@@ -27,8 +27,8 @@
   const stepNo = (key) => STEP_KEYS.indexOf(key) + 1;
 
   const PANEL = {
-    welcome: { photos: ['portal', 'hero'], quote: 'Getting to know your most cherished ones.' },
-    children: { photos: ['family', 'hero'], quote: 'A separate, private profile for every child.' },
+    welcome: { photos: ['portal', 'story'], quote: 'Getting to know your most cherished ones.' },
+    children: { photos: ['family', 'story'], quote: 'A separate, private profile for every child.' },
     basic: { photos: ['story'], quote: 'Every introduction begins with a name.' },
     temperament: { photos: ['care'], quote: 'Understanding temperament allows us to pace each new experience gently.' },
     interests: { photos: ['play', 'care'], quote: 'Children engage most deeply with what they already love.' },
@@ -39,7 +39,7 @@
     traditions: { photos: ['tradition'], quote: "Your family's traditions, respected as you observe them." },
     travel: { photos: ['journey'], quote: 'Every journey, thoughtfully prepared.' },
     additional: { photos: ['villa'], quote: 'Anything that matters to you matters to us.' },
-    review: { photos: ['hero'], quote: 'Every child is unique. Every family is different. Every journey matters.' },
+    review: { photos: ['story'], quote: 'Every child is unique. Every family is different. Every journey matters.' },
   };
 
   const ICONS = {
@@ -440,7 +440,7 @@
       ${input('routines.toileting_notes', 'Diaper or potty-training needs', { rows: 2, max: 500 })}
       ${input('routines.habits', 'Important daily habits', { rows: 2, max: 1000, placeholder: 'e.g. a story before nap, a favourite cup at breakfast' })}
       ${input('routines.notes', "Is there anything important we should know about your child's routine?", { rows: 3, max: 4000 })}`,
-    health: () => `<div class="privacy-card"><h3>Private &amp; protected</h3>
+    health: () => `<div class="privacy-card"><h2>Private &amp; protected</h2>
         <p>Health information is encrypted and visible only to you and authorized AHUVAI administrators. Relevant details are shared only with caregivers arranged for your family, so they can keep your child safe. Please share only what is genuinely helpful for their care.</p></div>
       ${question('Does your child have any food allergies or intolerances?')}
       ${tiles('health.has_allergies', O.yesNo, { cls: 'two', label: 'Food allergies' })}
@@ -545,7 +545,7 @@
     const blocks = S.SECTIONS.map((s) => {
       const done = comp.sections[s.key];
       const flag = done ? '<span class="flag ok">Complete</span>' : (s.required ? '<span class="flag">Needs attention</span>' : '<span class="flag ok">Optional</span>');
-      return `<div class="review-section"><h3>${esc(s.title)} ${flag}</h3>
+      return `<div class="review-section"><h2>${esc(s.title)} ${flag}</h2>
         <a class="text-link edit" href="#/child/${c.id}/${s.key}">Edit</a>
         <div class="review-body"><dl>${sections[s.key] || ''}</dl>${sections[s.key] ? '' : '<p class="muted">No answers yet.</p>'}</div></div>`;
     }).join('');

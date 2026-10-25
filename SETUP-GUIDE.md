@@ -188,31 +188,40 @@ What you should still do:
   families are based.
 - Turn on two-step verification for every administrator.
 - Review **Settings → Data retention** every few months.
+- Confirm that daily database backups are switched on in your hosting dashboard (on Render: the
+  database → **Backups**). Backups are only useful together with your encryption key.
 - Keep your encryption key safe (section 3, Step C).
 
 ---
 
 ## 8. Photography
 
-The site is designed around luxury travel photography. Until you add photos, elegant illustrated
-panels fill those spaces. To add your own licensed images, save them in `public/images/` with
-these names (`.jpg` or `.webp`), and they appear automatically after the next deploy:
+Your villa-terrace photograph is in place. It appears as the panoramic homepage image, as a crop
+on the Shabbat table (homepage tradition section, Services → Jewish Family Childcare,
+questionnaire step 10), and as a crop on the mother and children (Our Story, questionnaire opening
+and review screens). Remaining photo spaces show an elegant illustrated panel until you add more
+images.
 
-| File name | Where it appears | Suggested subject |
+To add photos, save them in `public/images/` with these names (`.jpg` or `.webp`). They appear
+automatically after the next deploy. Replacing a file with the same name swaps the photo.
+
+| File name | Where it appears | Status / suggested subject |
 |---|---|---|
-| `hero` | Homepage, questionnaire review | Terrace or villa overlooking the sea |
-| `story` | Our Story, questionnaire step 3 | Quiet morning light by a hotel window |
-| `tradition` | Homepage, Services, step 10 | Shabbat table with candles and flowers |
-| `journey` | Services, step 11 | Clouds through an airplane window |
-| `villa` | Services, steps 9 & 12 | Sunlit villa courtyard |
-| `residence` | Services, steps 6 & 7 | Calm living room of a private residence |
-| `care` | Approach, steps 4 & 8 | Children's books and a blanket on a window seat |
-| `portal`, `family` | Questionnaire steps 1 & 2 | Soft travel still life (luggage, linen, flowers) |
+| `hero` (+ `hero-960` smaller copy for phones) | Homepage panorama | ✓ Your villa terrace photo |
+| `story` | Our Story; questionnaire steps 1, 2, 3, 13 | ✓ Crop of your photo (mother and children) |
+| `tradition` | Homepage, Services, step 10 | ✓ Crop of your photo (Shabbat table) |
+| `journey` | Services → Traveling Nannies, step 11 | Clouds through an airplane window |
+| `villa` | Services → Destination Nannies, steps 9 & 12 | Sunlit villa courtyard or resort |
+| `residence` | Services → Extended-Stay, steps 6 & 7 | Calm living room of a private residence |
+| `care` | The Approach, steps 4 & 8 | Children's books and a blanket on a window seat |
 
-Use photos you have the rights to (your own, commissioned, or properly licensed stock). Choose
-images that don't show identifiable children unless you have the parents' permission.
+Use photos you have the rights to. Choose images that don't show identifiable children's faces
+unless you have permission, as in your current photo, where the family is seen from behind.
 
----
+## Logo
+
+The site uses your latest logo file (`public/img/ahuvai-logo.jpg`), exactly as supplied. Your
+earlier version is kept as `public/img/ahuvai-logo-original.png`.
 
 ## 9. If something goes wrong
 

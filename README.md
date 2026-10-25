@@ -10,6 +10,7 @@ administrator dashboard, backed by PostgreSQL with row-level security.
 - Node.js 20+ / Express, no front-end build step (plain HTML, CSS, JavaScript)
 - PostgreSQL 13+ (tested on 16)
 - Self-hosted fonts; strict Content-Security-Policy (no inline scripts or styles, no third-party requests)
+- Brand colours as specified; small gold text uses `--gold-text` (#715F41), a deeper shade of Antique Gold that meets WCAG AA contrast
 
 ## Layout
 
@@ -30,7 +31,7 @@ public/js/portal.js                 family dashboard + questionnaire
 public/js/admin.js                  administrator dashboard
 views/              layouts, partials and page content
 scripts/            seed-demo.js, create-admin.js, demo-data.js
-tests/              e2e.test.js, storage-guard.test.js, browser-flow.js
+tests/              e2e.test.js, storage-guard.test.js, browser-flow.js, browser-admin.js, accessibility.js
 ```
 
 ## Security model
@@ -61,8 +62,11 @@ npm run seed:demo                 # optional fictional families (marked Demo)
 ```bash
 # Uses TEST_DATABASE_URL (default postgres://ahuvai:ahuvai_dev@localhost:5432/ahuvai_test); the test DB is wiped.
 npm test               # API end-to-end scenario + access-control + storage guard (19 tests)
-npm run test:browser   # real browser: inquiry → invite → 3 children × 13 steps → admin review; screenshots in ./screenshots
+npm run test:browser         # real browser: inquiry → invite → 3 children × 13 steps → admin review
+npm run test:browser:admin   # real browser: every admin tool (2FA, filters, notes, export, delete, demo removal) + portal edge cases
+npm run test:a11y            # axe-core accessibility audit of every screen (fails on serious/critical issues)
 ```
+Browser tests write screenshots to `./screenshots`.
 
 Run the tests with a non-superuser database account, because superusers bypass row-level security.
 

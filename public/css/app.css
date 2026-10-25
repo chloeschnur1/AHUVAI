@@ -5,10 +5,10 @@
 /* Header with numbered progress */
 .app-header { position: sticky; top: 0; z-index: 40; background: rgba(247, 243, 236, .96); backdrop-filter: blur(8px); }
 .app-header-inner { max-width: 1320px; margin: 0 auto; padding: 14px var(--gutter); display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-.app-header .logo { height: 36px; }
+.app-header .logo { height: 30px; }
 .app-header-right { display: flex; align-items: center; gap: 22px; }
 .step-count { font-family: var(--serif); font-size: 1.15rem; color: var(--heritage); letter-spacing: .08em; font-variant-numeric: lining-nums; }
-.step-count .of { color: var(--gold); margin: 0 6px; }
+.step-count .of { color: var(--gold-text); margin: 0 6px; }
 .save-state { font-size: .68rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-soft); min-width: 64px; text-align: right; }
 .save-state.error { color: var(--error); }
 .progress-line { height: 1px; background: var(--line-soft); }
@@ -25,23 +25,23 @@
 .dash-head h1 { font-size: clamp(2.4rem, 4.5vw, 3.4rem); }
 .dash-head .lede { margin: 12px 0 0; }
 .trip-card { border: 1px solid var(--line); background: var(--white); padding: 22px 28px; min-width: 260px; }
-.trip-card .label { font-size: .64rem; letter-spacing: .24em; text-transform: uppercase; color: var(--gold); display: block; margin-bottom: 6px; }
+.trip-card .label { font-size: .64rem; letter-spacing: .24em; text-transform: uppercase; color: var(--gold-text); display: block; margin-bottom: 6px; }
 .trip-card .dest { font-family: var(--serif); font-size: 1.45rem; color: var(--heritage); line-height: 1.2; }
 .trip-card .dates { font-size: .85rem; color: var(--ink-soft); }
-.section-label { font-size: .7rem; letter-spacing: .3em; text-transform: uppercase; color: var(--gold); display: flex; align-items: center; gap: 16px; margin: 0 0 22px; }
+.section-label { font-size: .7rem; letter-spacing: .3em; text-transform: uppercase; color: var(--gold-text); display: flex; align-items: center; gap: 16px; margin: 0 0 22px; }
 .section-label::after { content: ''; flex: 1; height: 1px; background: var(--line-soft); }
 
 .child-cards { display: grid; gap: 16px; }
 .child-card { background: var(--white); border: 1px solid var(--line-soft); padding: 28px 32px; display: grid; grid-template-columns: 1fr auto; gap: 20px 30px; align-items: center; transition: border-color .3s var(--ease), box-shadow .3s var(--ease); }
 .child-card:hover { border-color: var(--line); box-shadow: 0 10px 30px -22px rgba(48, 56, 60, .35); }
-.child-card .ordinal { font-size: .64rem; letter-spacing: .26em; text-transform: uppercase; color: var(--gold); }
+.child-card .ordinal { font-size: .64rem; letter-spacing: .26em; text-transform: uppercase; color: var(--gold-text); }
 .child-card h2 { font-size: 1.85rem; margin: 2px 0 4px; }
 .child-card h2 .age { font-style: italic; color: var(--ink-soft); font-size: .8em; margin-left: 6px; }
 .child-status { display: flex; align-items: center; gap: 14px; font-size: .78rem; color: var(--ink-soft); flex-wrap: wrap; }
 .status-pill { display: inline-flex; align-items: center; gap: 8px; font-size: .64rem; letter-spacing: .18em; text-transform: uppercase; padding: 6px 12px; border: 1px solid var(--line); color: var(--heritage); background: var(--paper); }
 .status-pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
 .status-pill.complete::before, .status-pill.submitted::before { background: var(--gold); }
-.status-pill.submitted { background: var(--champagne); border-color: var(--gold); }
+.status-pill.submitted { background: var(--champagne); border-color: var(--gold); color: var(--charcoal); }
 .status-pill.in_progress::before, .status-pill.editing_after_submit::before { background: var(--heritage); }
 .status-pill.attention { border-color: #D7B98A; color: #7A5A22; background: #FBF5E9; }
 .meter { width: 160px; height: 2px; background: var(--line-soft); position: relative; }
@@ -75,9 +75,9 @@
 .child-chip { display: inline-flex; align-items: center; gap: 10px; min-height: 38px; padding: 0 16px; border: 1px solid var(--line-soft); background: transparent; font: 400 .8rem/1 var(--sans); color: var(--charcoal); cursor: pointer; transition: all .25s var(--ease); }
 .child-chip:hover { border-color: var(--gold); }
 .child-chip[aria-current="true"] { background: var(--heritage); border-color: var(--heritage); color: var(--ivory); }
-.child-chip .pct { font-size: .68rem; opacity: .7; }
+.child-chip .pct { font-size: .68rem; }
 
-.q-step-label { font-size: .7rem; letter-spacing: .3em; text-transform: uppercase; color: var(--gold); display: block; margin-bottom: 18px; }
+.q-step-label { font-size: .7rem; letter-spacing: .3em; text-transform: uppercase; color: var(--gold-text); display: block; margin-bottom: 18px; }
 .q-content h1 { font-size: clamp(2.1rem, 3.6vw, 3rem); margin-bottom: 18px; }
 .q-intro { color: var(--ink-soft); font-size: 1.02rem; max-width: 36em; margin-bottom: 40px; }
 .q-content.centered .q-intro { margin-left: auto; margin-right: auto; }
@@ -87,7 +87,7 @@
 .q-block { margin-bottom: 30px; }
 .q-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
 .q-fields .full { grid-column: 1 / -1; }
-.age-readout { font-family: var(--serif); font-style: italic; color: var(--gold); font-size: 1.1rem; margin-top: 8px; display: block; min-height: 1.4em; }
+.age-readout { font-family: var(--serif); font-style: italic; color: var(--gold-text); font-size: 1.1rem; margin-top: 8px; display: block; min-height: 1.4em; }
 
 /* Selection tiles */
 .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
@@ -119,8 +119,9 @@
 .reveal-field[hidden] { display: none; }
 
 .shared-card { border: 1px solid var(--line); background: var(--paper); padding: 26px 28px 8px; margin-bottom: 36px; position: relative; }
-.shared-card .tag { position: absolute; top: -10px; left: 22px; background: var(--ivory); padding: 0 10px; font-size: .62rem; letter-spacing: .24em; text-transform: uppercase; color: var(--gold); }
+.shared-card .tag { position: absolute; top: -10px; left: 22px; background: var(--ivory); padding: 0 10px; font-size: .62rem; letter-spacing: .24em; text-transform: uppercase; color: var(--gold-text); }
 .privacy-card { border-left: 2px solid var(--gold); background: var(--white); padding: 22px 26px; margin-bottom: 34px; font-size: .9rem; color: var(--ink-soft); }
+.privacy-card h2 { font-size: 1.25rem; margin-bottom: 8px; }
 .privacy-card h3 { font-size: 1.25rem; margin-bottom: 8px; }
 .privacy-card p:last-child { margin-bottom: 0; }
 
@@ -136,7 +137,7 @@
 /* Step 2 — children list */
 .kid-rows { display: grid; gap: 12px; margin-top: 30px; text-align: left; }
 .kid-row { display: grid; grid-template-columns: auto 1fr auto auto; gap: 18px; align-items: center; background: var(--white); border: 1px solid var(--line-soft); padding: 14px 18px; }
-.kid-row .n { font-family: var(--serif); font-style: italic; color: var(--gold); font-size: 1.2rem; width: 28px; }
+.kid-row .n { font-family: var(--serif); font-style: italic; color: var(--gold-text); font-size: 1.2rem; width: 28px; }
 .kid-row .input { min-height: 44px; }
 .kid-row .remove { background: none; border: 0; color: var(--ink-soft); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; cursor: pointer; padding: 8px; }
 .kid-row .remove:hover { color: var(--error); }
@@ -145,6 +146,7 @@
 
 /* Review */
 .review-section { border-top: 1px solid var(--line-soft); padding: 26px 0; display: grid; grid-template-columns: 1fr auto; gap: 10px 20px; }
+.review-section h2 { font-size: 1.4rem; display: flex; align-items: center; gap: 12px; }
 .review-section h3 { font-size: 1.4rem; display: flex; align-items: center; gap: 12px; }
 .review-section .edit { align-self: start; }
 .review-body { grid-column: 1 / -1; font-size: .92rem; }
@@ -154,7 +156,7 @@
 .badges { display: flex; flex-wrap: wrap; gap: 6px; }
 .badge { display: inline-block; font-size: .78rem; padding: 4px 12px; border: 1px solid var(--line); background: var(--paper); color: var(--heritage); }
 .flag { font-family: var(--sans); font-size: .6rem; letter-spacing: .18em; text-transform: uppercase; padding: 4px 10px; background: #FBF5E9; color: #7A5A22; border: 1px solid #E8D6B0; }
-.flag.ok { background: transparent; color: var(--gold); border-color: var(--line); }
+.flag.ok { background: transparent; color: var(--gold-text); border-color: var(--line); }
 .motto { text-align: center; font-family: var(--serif); font-style: italic; font-size: clamp(1.4rem, 2.6vw, 1.9rem); color: var(--heritage); margin: 50px auto 10px; max-width: 22em; line-height: 1.4; }
 .submit-zone { text-align: center; margin-top: 30px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
 

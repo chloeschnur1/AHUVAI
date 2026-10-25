@@ -45,4 +45,8 @@ async function seed() {
   });
 }
 
-seed().then(() => db.pool.end()).catch((err) => { console.error(err.message); process.exit(1); });
+module.exports = { seed };
+
+if (require.main === module) {
+  seed().then(() => db.pool.end()).catch((err) => { console.error(err.message); process.exit(1); });
+}

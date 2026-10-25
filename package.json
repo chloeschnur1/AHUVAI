@@ -10,7 +10,9 @@
     "create-admin": "node scripts/create-admin.js",
     "generate-key": "node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\"",
     "test": "node --test --test-concurrency=1 tests/*.test.js",
-    "test:browser": "node tests/browser-flow.js"
+    "test:browser": "node tests/browser-flow.js",
+    "test:browser:admin": "node tests/browser-admin.js",
+    "test:a11y": "node tests/accessibility.js"
   },
   "license": "UNLICENSED",
   "dependencies": {
@@ -25,5 +27,8 @@
   "private": true,
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "axe-core": "^4.10.2"
   }
 }

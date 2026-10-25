@@ -19,6 +19,7 @@
   const pill = (status, labels) => `<span class="pill ${esc(status)}">${esc((labels || {})[status] || status)}</span>`;
   const date = (d) => (d ? esc(A.fmtDate(d, { day: 'numeric', month: 'short', year: 'numeric' })) : '—');
   const range = (a, b) => esc(A.fmtRange(a, b)) || '—';
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
   const meter = (p) => `<span class="meter-sm"><span data-w="${Number(p) || 0}"></span></span>${Number(p) || 0}%`;
 
   function toast(msg) {
@@ -50,7 +51,7 @@
   }
 
   function authCard(inner) {
-    root.innerHTML = `<div class="admin-auth"><div class="auth-card"><img src="/img/ahuvai-logo.png" class="logo" alt="AHUVAI — Private Family Concierge" width="2172" height="724">${inner}</div></div>`;
+    root.innerHTML = `<main class="admin-auth"><div class="auth-card"><img src="/img/ahuvai-logo.jpg" class="logo" alt="AHUVAI — Private Family Concierge" width="1634" height="444">${inner}</div></main>`;
   }
 
   function renderLogin() {
@@ -108,7 +109,7 @@
   function shell() {
     root.innerHTML = `<div class="admin-shell">
       <aside class="sidebar">
-        <img src="/img/ahuvai-logo.png" class="logo" alt="AHUVAI" width="2172" height="724">
+        <img src="/img/ahuvai-logo.jpg" class="logo" alt="AHUVAI" width="1634" height="444">
         <span class="tag">Administration</span>
         <button class="menu-btn link-btn" type="button" data-menu aria-expanded="false">Menu</button>
         <nav class="side-nav" data-sidenav>${NAV.map(([k, l]) => `<a href="#/${k}" data-nav="${k}">${l}<span data-count="${k}"></span></a>`).join('')}</nav>
@@ -173,7 +174,7 @@
       </div>
       <div class="grid-main">
         <section class="panel"><h2>Recent submissions</h2>
-          ${d.recent.length ? `<div class="table-wrap"><table class="data"><thead><tr><th>Child</th><th>Family</th><th>Destination</th><th>Submitted</th><th>Review</th></tr></thead><tbody>
+          ${d.recent.length ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Table"><table class="data"><thead><tr><th>Child</th><th>Family</th><th>Destination</th><th>Submitted</th><th>Review</th></tr></thead><tbody>
             ${d.recent.map((r) => `<tr class="clickable" data-href="#/children/${r.id}"><td><span class="name">${esc(r.preferred_name || r.full_name)}</span><span class="sub">${esc(r.age_label)}</span></td>
               <td>${esc(r.family_name)}</td><td>${esc(r.destination || '—')}</td><td>${date(r.submitted_at)}</td><td>${pill(r.review_status, REVIEW)}</td></tr>`).join('')}
           </tbody></table></div>` : '<div class="empty">No profiles have been submitted yet.</div>'}
@@ -195,7 +196,7 @@
         ${[['new', 'New'], ['reviewed', 'Reviewed'], ['contacted', 'Contacted'], ['invited', 'Invited'], ['declined', 'Declined'], ['archived', 'Archived'], ['', 'All']]
           .map(([k, l]) => `<button type="button" data-inq-filter="${k}" aria-pressed="${inqFilter === k}">${l}</button>`).join('')}
       </div>
-      <section class="panel">${d.inquiries.length ? `<div class="table-wrap"><table class="data"><thead><tr><th>Parent</th><th>Destination</th><th>Dates</th><th>Children</th><th>Care</th><th>Received</th><th>Status</th></tr></thead><tbody>
+      <section class="panel">${d.inquiries.length ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Table"><table class="data"><thead><tr><th>Parent</th><th>Destination</th><th>Dates</th><th>Children</th><th>Care</th><th>Received</th><th>Status</th></tr></thead><tbody>
         ${d.inquiries.map((i) => `<tr class="clickable" data-href="#/inquiries/${i.id}"><td><span class="name">${esc(i.parent_name)}</span><span class="sub">${esc(i.email)}</span></td>
           <td>${esc(i.destination)}</td><td>${range(i.travel_start, i.travel_end)}</td><td>${i.num_children}<span class="sub">Ages ${esc(i.children_ages)}</span></td>
           <td>${esc(i.nanny_type)}</td><td>${date(i.created_at)}</td><td>${pill(i.status, INQ_STATUS)}</td></tr>`).join('')}
@@ -266,7 +267,7 @@
         <button class="btn btn-small" type="submit">Filter</button>
         <button class="btn btn-small btn-quiet" type="button" data-clear-filter>Clear</button>
       </form>
-      <section class="panel">${d.families.length ? `<div class="table-wrap"><table class="data"><thead><tr><th>Family</th><th>Email</th><th>Children</th><th>Destination</th><th>Travel dates</th><th>Submitted</th><th>Status</th></tr></thead><tbody>
+      <section class="panel">${d.families.length ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Table"><table class="data"><thead><tr><th>Family</th><th>Email</th><th>Children</th><th>Destination</th><th>Travel dates</th><th>Submitted</th><th>Status</th></tr></thead><tbody>
         ${d.families.map((f) => `<tr class="clickable" data-href="#/families/${f.id}"><td><span class="name">${esc(f.family_name)}</span><span class="sub">${esc(f.primary_guardian)}</span></td>
           <td>${esc(f.primary_email)}</td><td>${f.children}<span class="sub">${f.submitted} submitted</span></td><td>${esc(f.destination || '—')}</td>
           <td>${range(f.start_date, f.end_date)}</td><td>${date(f.submitted_at)}</td><td>${pill(f.status, FAM_STATUS)} ${f.is_demo ? '<span class="pill demo">Demo</span>' : ''}</td></tr>`).join('')}
@@ -363,7 +364,7 @@
   }
 
   function childTable(rows, showMissing) {
-    return `<section class="panel">${rows.length ? `<div class="table-wrap"><table class="data"><thead><tr><th>Child</th><th>Family</th><th>Destination</th><th>Progress</th>${showMissing ? '<th>Incomplete sections</th>' : '<th>Submitted</th>'}<th>Status</th></tr></thead><tbody>
+    return `<section class="panel">${rows.length ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Table"><table class="data"><thead><tr><th>Child</th><th>Family</th><th>Destination</th><th>Progress</th>${showMissing ? '<th>Incomplete sections</th>' : '<th>Submitted</th>'}<th>Status</th></tr></thead><tbody>
       ${rows.map((c) => `<tr class="clickable" data-href="#/children/${c.id}"><td><span class="name">${esc(c.preferred_name || c.full_name || 'Unnamed')}</span><span class="sub">${esc(c.age_label)}</span></td>
         <td>${esc(c.family_name)}</td><td>${esc(c.destination || '—')}</td><td>${meter(c.percent_complete)}</td>
         <td>${showMissing ? (c.missing.length ? esc(c.missing.map((k) => SECTION_TITLE[k]).join(', ')) : '—') : date(c.submitted_at)}</td>
@@ -418,7 +419,7 @@
     const list = (xs) => (xs && xs.length ? F.badges(xs) : '—');
     render(`<div class="page-title"><div><span class="eyebrow">At a Glance</span><h1>Care Preferences</h1></div></div>
       <p class="muted">Key care details from every submitted profile, for planning and caregiver preparation. Open a child for full details.</p>
-      <section class="panel">${d.children.length ? `<div class="table-wrap"><table class="data"><thead><tr><th>Child</th><th>Food allergies</th><th>Diet</th><th>Traditions</th><th>Sensory</th><th>Comfort</th><th>Travel</th></tr></thead><tbody>
+      <section class="panel">${d.children.length ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Table"><table class="data"><thead><tr><th>Child</th><th>Food allergies</th><th>Diet</th><th>Traditions</th><th>Sensory</th><th>Comfort</th><th>Travel</th></tr></thead><tbody>
         ${d.children.map((c) => `<tr class="clickable" data-href="#/children/${c.id}"><td><span class="name">${esc(c.name)}</span><span class="sub">${esc(c.age_label)} · ${esc(c.family_name)}</span>${c.medical ? '<span class="flag">Medical notes</span>' : ''}</td>
           <td>${c.allergies === 'Yes' ? `<span class="flag">Yes</span><span class="sub">${esc(c.allergy_details)}</span>` : esc(c.allergies || '—')}</td>
           <td>${list(c.diet)}</td><td>${list(c.traditions)}</td><td>${list(c.sensory)}</td><td>${list(c.comfort)}</td>
@@ -467,7 +468,7 @@
           </div></section>
       </div>
       <section class="panel"><h2>Administrators</h2>
-        <table class="data"><thead><tr><th>Name</th><th>Email</th><th>Two-step</th><th>Last sign-in</th><th></th></tr></thead><tbody>
+        <table class="data"><thead><tr><th>Name</th><th>Email</th><th>Two-step</th><th>Last sign-in</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody>
         ${d.admins.map((x) => `<tr><td>${esc(x.name)}</td><td>${esc(x.email)}</td><td>${x.totp_enabled ? 'On' : 'Off'}</td><td>${date(x.last_login_at)}</td>
           <td>${x.id === d.meId ? '<span class="muted">You</span>' : `<button class="link-btn" data-remove-admin="${x.id}">Remove</button>`}</td></tr>`).join('')}
         </tbody></table>
@@ -484,7 +485,7 @@
           ${d.oldInquiries ? '<button class="btn btn-small btn-quiet danger" data-purge-inquiries>Delete Old Inquiries</button>' : ''}</section>
         <section class="panel"><h2>Demonstration data</h2>
           <p class="muted">Fictional families created for testing are marked “Demo”. Remove them all before welcoming real clients.</p>
-          <p>${d.demo.families} demo families · ${d.demo.inquiries} demo inquiries · ${d.demo.messages} demo messages</p>
+          <p>${plural(d.demo.families, 'demo family', 'demo families')} · ${plural(d.demo.inquiries, 'demo inquiry', 'demo inquiries')} · ${plural(d.demo.messages, 'demo message', 'demo messages')}</p>
           ${d.demo.families + d.demo.inquiries + d.demo.messages ? '<button class="btn btn-small danger" data-remove-demo>Remove All Demonstration Data</button>' : ''}</section>
       </div>
       <section class="panel"><h2>Recent activity <small>Sign-ins, views and changes — never questionnaire content</small></h2><div data-audit><button class="btn btn-small btn-quiet" data-load-audit>Show Activity Log</button></div></section>`);
@@ -547,7 +548,7 @@
       }
       if (t.dataset.loadAudit !== undefined) {
         const r = await A.get('/api/admin/audit');
-        view().querySelector('[data-audit]').innerHTML = `<div class="table-wrap"><table class="data"><thead><tr><th>When</th><th>Who</th><th>Action</th></tr></thead><tbody>
+        view().querySelector('[data-audit]').innerHTML = `<div class="table-wrap" tabindex="0" role="region" aria-label="Table"><table class="data"><thead><tr><th>When</th><th>Who</th><th>Action</th></tr></thead><tbody>
           ${r.entries.map((x) => `<tr><td>${esc(new Date(x.created_at).toLocaleString())}</td><td>${esc(x.actor_name || x.actor_kind)}</td><td>${esc(x.action.replace(/[._]/g, ' '))}</td></tr>`).join('')}</tbody></table></div>`;
       }
     } catch (err) { t.disabled = false; fail(err); }

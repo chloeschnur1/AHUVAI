@@ -102,9 +102,13 @@ function renderPage(def) {
     .replace(/{{year}}/g, String(new Date().getFullYear()))
     .replace(/{{contactEmail}}/g, escapeAttr(config.contactEmail))
     .replace('{{photos}}', escapeAttr(availablePhotos().join(',')))
-    .replace(/{{photo:([a-z0-9-]+)\|([^}]*)}}/g, (m, name, alt) => {
+    .replace(/{{photo:([a-z0-9-]+)\|([^}|]*)(\|eager)?}}/g, (m, name, alt, eager) => {
       const src = photoFile(name);
-      return src ? `<img src="${src}" alt="${escapeAttr(alt)}" loading="lazy" decoding="async">` : read('partials/photo-fallback.html');
+      if (!src) return read('partials/photo-fallback.html');
+      const small = photoFile(`${name}-960`);
+      const srcset = small ? ` srcset="${small} 960w, ${src} 1672w" sizes="(max-width: 1000px) 100vw, 1360px"` : '';
+      const loading = eager ? 'fetchpriority="high"' : 'loading="lazy"';
+      return `<img src="${src}"${srcset} alt="${escapeAttr(alt)}" ${loading} decoding="async">`;
     });
   html = html.replace(/<!--if-contact-email-->([\s\S]*?)<!--end-->/g, config.contactEmail ? '$1' : '');
   html = html.replace(/data-nav="([a-z]+)"/g, (m, key) => (key === def.nav ? `${m} aria-current="page"` : m));
