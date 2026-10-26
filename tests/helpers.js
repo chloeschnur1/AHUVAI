@@ -17,7 +17,7 @@ async function resetDatabase() {
   await db.migrate();
   // TRUNCATE is run by the table owner and is not filtered by row-level security.
   await db.pool.query(`TRUNCATE audit_log, messages, admin_notes, child_profiles, children, sessions, invitations,
-    family_users, inquiries, families, admin_users CASCADE`);
+    family_users, families, admin_users CASCADE`);
 }
 
 async function startServer() {

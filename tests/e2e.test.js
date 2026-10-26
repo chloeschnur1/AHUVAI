@@ -9,12 +9,7 @@ const schema = require('../public/js/questionnaire-schema');
 let server, base, admin, cohen, levi;
 const ids = {};
 
-const inquiry = {
-  parent_name: 'Sarah Cohen', email: 'sarah.cohen@example.test', preferred_contact: 'WhatsApp', phone: '+1 555 0101',
-  destination: 'Paris, France', travel_start: '2026-12-12', travel_end: '2026-12-22', num_children: 3,
-  children_ages: '5, 3 and 1', nanny_type: 'Traveling nanny', care_duration: 'Ten days', preferences: 'Calm, warm caregiver',
-  cultural_considerations: 'Shabbat observant', consent: true,
-};
+const signup = { name: 'Sarah Cohen', email: 'sarah.cohen@example.test', phone: '+1 555 0101', password: 'a-good-family-password', consent: true };
 
 test.before(async () => {
   ({ server, base } = await startServer());
@@ -34,16 +29,13 @@ test('public pages render and the secure storage self-check passes', async () =>
   assert.equal(s.body.secureStorageReady, true);
 });
 
-test('inquiry form validates and saves; the public cannot read inquiries back', async () => {
+test('contact form validates and saves; the public cannot read messages back', async () => {
   const pub = client(base);
-  assert.equal((await pub.post('/api/inquiries', { ...inquiry, consent: false })).status, 400);
-  assert.equal((await pub.post('/api/inquiries', { ...inquiry, email: 'not-an-email' })).status, 400);
-  assert.equal((await pub.post('/api/inquiries', { ...inquiry, travel_end: '2026-12-01' })).status, 400);
-  const noCsrf = await pub.post('/api/inquiries', inquiry, { 'X-Requested-With': '' });
+  assert.equal((await pub.post('/api/contact', { name: 'Ruth', email: 'bad', message: 'Hello' })).status, 400);
+  const noCsrf = await pub.post('/api/contact', { name: 'Ruth', email: 'ruth@example.test', message: 'Hello' }, { 'X-Requested-With': '' });
   assert.equal(noCsrf.status, 403, 'requests without the same-site header are blocked');
-  const ok = await pub.post('/api/inquiries', inquiry);
-  assert.equal(ok.status, 201);
-  assert.equal((await pub.get('/api/admin/inquiries')).status, 401);
+  assert.equal((await pub.post('/api/contact', { name: 'Ruth', email: 'ruth@example.test', message: 'Hello' })).status, 201);
+  assert.equal((await pub.get('/api/admin/messages')).status, 401);
 });
 
 test('administrator setup works exactly once and requires the setup code', async () => {
@@ -58,35 +50,25 @@ test('administrator setup works exactly once and requires the setup code', async
   assert.equal(me.body.me.email, 'owner@example.test');
 });
 
-test('admin reviews the inquiry and invites the family (email not configured -> secure link)', async () => {
-  const list = await admin.get('/api/admin/inquiries?status=new');
-  assert.equal(list.body.inquiries.length, 1);
-  ids.inquiry = list.body.inquiries[0].id;
-  assert.equal((await admin.patch(`/api/admin/inquiries/${ids.inquiry}`, { status: 'reviewed' })).status, 200);
-  assert.equal((await admin.patch(`/api/admin/inquiries/${ids.inquiry}`, { status: 'contacted' })).status, 200);
-  const inv = await admin.post(`/api/admin/inquiries/${ids.inquiry}/invite`);
-  assert.equal(inv.status, 200);
-  assert.equal(inv.body.emailSent, false, 'email is honestly reported as not sent');
-  assert.match(inv.body.inviteUrl, /\/portal\/invite\?token=/);
-  ids.cohenFamily = inv.body.familyId;
-  ids.cohenToken = new URL(inv.body.inviteUrl).searchParams.get('token');
-  const fam = await admin.get(`/api/admin/families/${ids.cohenFamily}`);
-  assert.equal(fam.body.family.family_name, 'The Cohen Family');
-  assert.equal(fam.body.family.travel.destination, 'Paris, France');
-});
-
-test('parent accepts the invitation and creates an account', async () => {
-  const info = await cohen.get(`/api/family/invitation?token=${ids.cohenToken}`);
-  assert.equal(info.status, 200);
-  assert.equal(info.body.email, 'sarah.cohen@example.test');
-  assert.equal((await cohen.post('/api/family/invitation/accept', { token: ids.cohenToken, name: 'Sarah Cohen', password: 'short', consent: true })).status, 400);
-  assert.equal((await cohen.post('/api/family/invitation/accept', { token: ids.cohenToken, name: 'Sarah Cohen', password: 'a-good-family-password', consent: false })).status, 400);
-  const ok = await cohen.post('/api/family/invitation/accept', { token: ids.cohenToken, name: 'Sarah Cohen', password: 'a-good-family-password', consent: true });
+test('a parent creates their own family account directly', async () => {
+  const pub = client(base);
+  assert.equal((await pub.post('/api/family/register', { ...signup, password: 'short' })).status, 400);
+  assert.equal((await pub.post('/api/family/register', { ...signup, consent: false })).status, 400);
+  assert.equal((await pub.post('/api/family/register', { ...signup, email: 'nope' })).status, 400);
+  const ok = await cohen.post('/api/family/register', signup);
   assert.equal(ok.status, 201);
-  assert.equal((await client(base).post('/api/family/invitation/accept', { token: ids.cohenToken, name: 'X', password: 'another-password-1', consent: true })).status, 400, 'invitation links work once');
   const me = await cohen.get('/api/family/me');
+  assert.equal(me.status, 200, 'signed in straight away');
+  assert.equal(me.body.family.family_name, 'The Cohen Family');
   assert.equal(me.body.family.status, 'onboarding');
   assert.deepEqual(me.body.children, []);
+  ids.cohenFamily = me.body.family.id;
+  const dup = await client(base).post('/api/family/register', { ...signup, name: 'Someone Else' });
+  assert.equal(dup.status, 400, 'one account per email address');
+  assert.equal((await client(base).post('/api/family/login', { email: signup.email, password: signup.password })).status, 200);
+  const fam = await admin.get(`/api/admin/families/${ids.cohenFamily}`);
+  assert.equal(fam.body.family.phone, '+1 555 0101');
+  assert.equal((await admin.get('/api/admin/overview')).body.stats.new_families, 1);
 });
 
 test('parent creates three separate child profiles and completes each one', async () => {
@@ -143,6 +125,9 @@ test('parent submits all profiles; success is reported only after saving', async
   const me = await cohen.get('/api/family/me');
   assert.ok(me.body.children.every((c) => c.completion_status === 'submitted' && c.submitted_at));
   assert.equal(me.body.family.status, 'profiles_submitted');
+  const review = await admin.get('/api/admin/families?status=profiles_submitted');
+  assert.deepEqual(review.body.families.map((f) => f.id), [ids.cohenFamily], 'family appears in Awaiting Review');
+  assert.equal((await admin.get('/api/admin/overview')).body.stats.awaiting_review, 1);
 });
 
 test('admin sees the family and reviews each of the three children individually', async () => {
@@ -261,7 +246,7 @@ test('database row-level security blocks cross-family access even if application
     (c) => c.query(`UPDATE families SET status = 'active' WHERE id = $1`, [ids.cohenFamily])), /may not set status/);
   await assert.rejects(db.withContext({ role: 'admin' },
     (c) => c.query(`UPDATE child_profiles SET answers_enc = 'x' WHERE child_id = $1`, [ids.david])), /may not modify parent answers/);
-  const anon = await db.withContext({ role: 'public' }, (c) => c.query('SELECT * FROM inquiries'));
+  const anon = await db.withContext({ role: 'public' }, (c) => c.query('SELECT * FROM messages'));
   assert.equal(anon.rowCount, 0);
   assert.deepEqual(await db.verifyRowLevelSecurity(), []);
 });

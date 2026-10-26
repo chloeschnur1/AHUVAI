@@ -4,7 +4,7 @@
 -- Access model (enforced by PostgreSQL itself, not only by application code):
 --   Every request runs inside a transaction that switches to the restricted
 --   role "ahuvai_rls" and sets app.role / app.family_id / app.user_id.
---     app.role = 'public'  -> may only INSERT inquiries and contact messages
+--     app.role = 'public'  -> may only INSERT contact messages
 --     app.role = 'auth'    -> sign-in / invitation lookups
 --     app.role = 'family'  -> may only see rows belonging to app.family_id
 --     app.role = 'admin'   -> full access (authorized administrator session)
@@ -37,29 +37,6 @@ CREATE TABLE IF NOT EXISTS admin_users (
   last_login_at timestamptz
 );
 
-CREATE TABLE IF NOT EXISTS inquiries (
-  id                     uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  parent_name            text NOT NULL,
-  email                  text NOT NULL,
-  phone                  text,
-  preferred_contact      text NOT NULL,
-  destination            text NOT NULL,
-  travel_start           date,
-  travel_end             date,
-  num_children           integer NOT NULL,
-  children_ages          text NOT NULL,
-  nanny_type             text NOT NULL,
-  care_duration          text,
-  preferences            text,
-  cultural_considerations text,
-  consent_at             timestamptz NOT NULL,
-  status                 text NOT NULL DEFAULT 'new'
-                         CHECK (status IN ('new','reviewed','contacted','invited','declined','archived')),
-  family_id              uuid,
-  is_demo                boolean NOT NULL DEFAULT false,
-  created_at             timestamptz NOT NULL DEFAULT now(),
-  updated_at             timestamptz NOT NULL DEFAULT now()
-);
 
 CREATE TABLE IF NOT EXISTS families (
   id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -73,7 +50,6 @@ CREATE TABLE IF NOT EXISTS families (
   status             text NOT NULL DEFAULT 'invited'
                      CHECK (status IN ('contacted','invited','onboarding','profiles_submitted','ready_for_review',
                                        'more_info_needed','active','archived')),
-  inquiry_id         uuid REFERENCES inquiries(id) ON DELETE SET NULL,
   privacy_consent_at timestamptz,
   is_demo            boolean NOT NULL DEFAULT false,
   submitted_at       timestamptz,
@@ -81,10 +57,6 @@ CREATE TABLE IF NOT EXISTS families (
   updated_at         timestamptz NOT NULL DEFAULT now()
 );
 
-DO $$ BEGIN
-  ALTER TABLE inquiries ADD CONSTRAINT inquiries_family_fk
-    FOREIGN KEY (family_id) REFERENCES families(id) ON DELETE SET NULL;
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 CREATE TABLE IF NOT EXISTS family_users (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -153,7 +125,6 @@ CREATE TABLE IF NOT EXISTS admin_notes (
   id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   family_id  uuid REFERENCES families(id) ON DELETE CASCADE,
   child_id   uuid REFERENCES children(id) ON DELETE CASCADE,
-  inquiry_id uuid REFERENCES inquiries(id) ON DELETE CASCADE,
   author_id  uuid REFERENCES admin_users(id) ON DELETE SET NULL,
   author_name text NOT NULL,
   body       text NOT NULL,
@@ -189,7 +160,11 @@ CREATE INDEX IF NOT EXISTS child_profiles_family_idx ON child_profiles(family_id
 CREATE INDEX IF NOT EXISTS family_users_family_idx ON family_users(family_id);
 CREATE INDEX IF NOT EXISTS sessions_expiry_idx ON sessions(expires_at);
 CREATE INDEX IF NOT EXISTS admin_notes_family_idx ON admin_notes(family_id);
-CREATE INDEX IF NOT EXISTS inquiries_status_idx ON inquiries(status, created_at DESC);
+
+-- Earlier versions had a separate inquiry form; families now sign up directly.
+ALTER TABLE families DROP COLUMN IF EXISTS inquiry_id;
+ALTER TABLE admin_notes DROP COLUMN IF EXISTS inquiry_id;
+DROP TABLE IF EXISTS inquiries CASCADE;
 
 -- ---------------------------------------------------------------- restricted role
 
@@ -215,7 +190,6 @@ END $$;
 -- ---------------------------------------------------------------- row-level security
 
 ALTER TABLE admin_users    ENABLE ROW LEVEL SECURITY;  ALTER TABLE admin_users    FORCE ROW LEVEL SECURITY;
-ALTER TABLE inquiries      ENABLE ROW LEVEL SECURITY;  ALTER TABLE inquiries      FORCE ROW LEVEL SECURITY;
 ALTER TABLE families       ENABLE ROW LEVEL SECURITY;  ALTER TABLE families       FORCE ROW LEVEL SECURITY;
 ALTER TABLE family_users   ENABLE ROW LEVEL SECURITY;  ALTER TABLE family_users   FORCE ROW LEVEL SECURITY;
 ALTER TABLE invitations    ENABLE ROW LEVEL SECURITY;  ALTER TABLE invitations    FORCE ROW LEVEL SECURITY;
@@ -231,10 +205,6 @@ CREATE POLICY staff_all ON admin_users USING (app_is_staff()) WITH CHECK (app_is
 DROP POLICY IF EXISTS auth_rw ON admin_users;
 CREATE POLICY auth_rw ON admin_users USING (app_role() = 'auth') WITH CHECK (app_role() = 'auth');
 
-DROP POLICY IF EXISTS staff_all ON inquiries;
-CREATE POLICY staff_all ON inquiries USING (app_is_staff()) WITH CHECK (app_is_staff());
-DROP POLICY IF EXISTS public_insert ON inquiries;
-CREATE POLICY public_insert ON inquiries FOR INSERT WITH CHECK (app_role() = 'public' AND status = 'new' AND family_id IS NULL);
 
 DROP POLICY IF EXISTS staff_all ON families;
 CREATE POLICY staff_all ON families USING (app_is_staff()) WITH CHECK (app_is_staff());
@@ -297,7 +267,6 @@ CREATE OR REPLACE FUNCTION protect_family_columns() RETURNS trigger LANGUAGE plp
 BEGIN
   IF app_role() = 'family' THEN
     IF NEW.is_demo IS DISTINCT FROM OLD.is_demo
-       OR NEW.inquiry_id IS DISTINCT FROM OLD.inquiry_id
        OR NEW.primary_email IS DISTINCT FROM OLD.primary_email THEN
       RAISE EXCEPTION 'families may not change protected fields';
     END IF;

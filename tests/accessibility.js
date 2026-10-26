@@ -58,13 +58,12 @@ const { seed } = require('../scripts/seed-demo');
     await page.click('button[type=submit]');
     await page.waitForSelector('.stats');
     await audit('admin overview');
-    for (const [hash, sel] of [['#/inquiries', '.tabs'], ['#/families', 'tr[data-href]'], ['#/children', 'tr[data-href]'],
+    for (const [hash, sel] of [['#/review', '.page-title'], ['#/families', 'tr[data-href]'], ['#/children', 'tr[data-href]'],
       ['#/submissions', 'tr[data-href]'], ['#/care', 'tr[data-href]'], ['#/messages', '[data-msg-read]'], ['#/settings', '[data-add-admin]']]) {
       await page.goto(base + '/admin' + hash); await page.waitForSelector(sel); await audit('admin ' + hash);
     }
     await page.goto(base + '/admin#/families'); await page.click('tr:has-text("Cohen")'); await page.waitForSelector('.kid-card'); await audit('admin family record');
     await page.click('.kid-card >> nth=0'); await page.waitForSelector('.profile-section'); await audit('admin child profile');
-    await page.goto(base + '/admin#/inquiries'); await page.click('[data-inq-filter=""]'); await page.click('tr[data-href] >> nth=0'); await page.waitForSelector('.family-hero'); await audit('admin inquiry');
 
     assert.deepEqual(problems, [], 'serious accessibility problems found');
     console.log('\nAccessibility check passed (no serious or critical issues).');

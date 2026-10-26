@@ -23,7 +23,7 @@ server/
   security.js       AES-256-GCM field encryption, scrypt passwords, TOTP
   profiles.js       child profile read/write, completion tracking
   status.js         "secure storage ready" self-check; blocks sensitive writes when not ready
-  routes/public.js  inquiry + contact forms (insert-only)
+  routes/public.js  contact form (insert-only)
   routes/family.js  family portal API
   routes/admin.js   administrator API
 public/js/questionnaire-schema.js   options, validation and completion rules (shared by browser and server)
@@ -61,8 +61,8 @@ npm run seed:demo                 # optional fictional families (marked Demo)
 
 ```bash
 # Uses TEST_DATABASE_URL (default postgres://ahuvai:ahuvai_dev@localhost:5432/ahuvai_test); the test DB is wiped.
-npm test               # API end-to-end scenario + access-control + storage guard (19 tests)
-npm run test:browser         # real browser: inquiry → invite → 3 children × 13 steps → admin review
+npm test               # API end-to-end scenario + access-control + storage guard (18 tests)
+npm run test:browser         # real browser: family sign-up → 3 children × 13 steps → admin review
 npm run test:browser:admin   # real browser: every admin tool (2FA, filters, notes, export, delete, demo removal) + portal edge cases
 npm run test:a11y            # axe-core accessibility audit of every screen (fails on serious/critical issues)
 ```

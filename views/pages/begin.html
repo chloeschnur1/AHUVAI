@@ -1,59 +1,33 @@
-<section class="page-hero">
+<section class="page-hero compact">
   <div class="wrap reveal">
     <span class="eyebrow">Begin Your Family Experience</span>
-    <h1>Tell us about your journey.</h1>
+    <h1>Let's get to know your family.</h1>
     <div class="divider"><svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C13 9 15 11 24 12C15 13 13 15 12 24C11 15 9 13 0 12C9 11 11 9 12 0Z" fill="currentColor"/></svg></div>
-    <p class="lede">A few details are all we need to begin. A member of the AHUVAI team will be in touch with you personally.</p>
+    <p class="lede">Create your private family account, add each of your children, and share a little about who they are. AHUVAI will review everything personally and be in touch.</p>
   </div>
 </section>
 
 <section class="section-tight">
-  <div class="wrap narrow">
-    <div class="form-card reveal" data-form-wrap>
-      <form data-api-form="/api/inquiries" novalidate>
+  <div class="wrap begin-grid">
+    <ol class="begin-steps reveal" aria-label="How it works">
+      <li><span class="num">i.</span><div><h2>Create your account</h2><p>A private, password-protected space for your family.</p></div></li>
+      <li><span class="num">ii.</span><div><h2>Add your children</h2><p>A separate profile for each child — personality, routines, comforts, traditions and your journey.</p></div></li>
+      <li><span class="num">iii.</span><div><h2>AHUVAI responds</h2><p>We review every detail personally and contact you to arrange care.</p></div></li>
+    </ol>
+    <div class="form-card reveal">
+      <form data-api-form="/api/family/register" data-redirect="/portal/family#/start" novalidate>
+        <h2 class="form-title">Create your family account</h2>
         <div class="notice error" role="alert" data-form-error></div>
-        <div class="form-grid">
-          <label class="field"><span class="label">Parent or guardian name</span><input class="input" type="text" name="parent_name" autocomplete="name" required maxlength="120"></label>
-          <label class="field"><span class="label">Email address</span><input class="input" type="email" name="email" autocomplete="email" required maxlength="200"></label>
-          <label class="field"><span class="label">Phone <span class="optional">optional</span></span><input class="input" type="tel" name="phone" autocomplete="tel" maxlength="40"></label>
-          <div class="field"><span class="fieldset-label" id="pc-label">Preferred contact method</span>
-            <div class="choice-row" role="radiogroup" aria-labelledby="pc-label">
-              <label class="chip"><input type="radio" name="preferred_contact" value="Email" required><span>Email</span></label>
-              <label class="chip"><input type="radio" name="preferred_contact" value="Phone call"><span>Phone call</span></label>
-              <label class="chip"><input type="radio" name="preferred_contact" value="WhatsApp"><span>WhatsApp</span></label>
-              <label class="chip"><input type="radio" name="preferred_contact" value="Text message"><span>Text</span></label>
-            </div>
-          </div>
-          <label class="field full"><span class="label">Travel destination</span><input class="input" type="text" name="destination" placeholder="e.g. Paris, France" required maxlength="200"></label>
-          <label class="field"><span class="label">Expected arrival</span><input class="input" type="date" name="travel_start"></label>
-          <label class="field"><span class="label">Expected departure</span><input class="input" type="date" name="travel_end"></label>
-          <label class="field"><span class="label">Number of children</span>
-            <select class="input" name="num_children" required><option value="">Select</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select></label>
-          <label class="field"><span class="label">Children's ages</span><input class="input" type="text" name="children_ages" placeholder="e.g. 5, 3 and 1" required maxlength="200"></label>
-          <div class="field full"><span class="fieldset-label" id="nt-label">Type of care</span>
-            <div class="choice-row" role="radiogroup" aria-labelledby="nt-label">
-              <label class="chip"><input type="radio" name="nanny_type" value="Traveling nanny" required><span>Traveling nanny</span></label>
-              <label class="chip"><input type="radio" name="nanny_type" value="Destination nanny"><span>Destination nanny</span></label>
-              <label class="chip"><input type="radio" name="nanny_type" value="Extended-stay care"><span>Extended-stay care</span></label>
-              <label class="chip"><input type="radio" name="nanny_type" value="Not sure yet"><span>Not sure yet</span></label>
-            </div>
-          </div>
-          <label class="field full"><span class="label">Approximate duration of care</span><input class="input" type="text" name="care_duration" placeholder="e.g. Ten days, daytime hours" maxlength="200"></label>
-          <label class="field full"><span class="label">General childcare preferences <span class="optional">optional</span></span><textarea class="input" name="preferences" maxlength="3000" placeholder="Anything you'd like us to know as we begin"></textarea>
-            <span class="hint">Please don't include medical details here — you'll be able to share those privately in your secure family portal.</span></label>
-          <label class="field full"><span class="label">Cultural or religious considerations <span class="optional">optional</span></span><textarea class="input" name="cultural_considerations" maxlength="3000" placeholder="For example, Shabbat or kosher considerations"></textarea></label>
-          <div class="hp" aria-hidden="true"><label>Leave this empty<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
-          <label class="check full"><input type="checkbox" name="consent" required><span>I have read the <a href="/privacy" target="_blank" rel="noopener">privacy notice</a> and agree that AHUVAI may use these details to respond to my inquiry.</span></label>
-        </div>
-        <div class="center"><button class="btn btn-primary" type="submit" data-submit>Send Inquiry <svg class="arrow" viewBox="0 0 18 10" aria-hidden="true"><path d="M0 5h16M12 1l4 4-4 4" fill="none" stroke="currentColor"/></svg></button></div>
+        <label class="field"><span class="label">Your name</span><input class="input" type="text" name="name" autocomplete="name" required maxlength="120"></label>
+        <label class="field"><span class="label">Email address</span><input class="input" type="email" name="email" autocomplete="email" required maxlength="200"></label>
+        <label class="field"><span class="label">Phone <span class="optional">optional</span></span><input class="input" type="tel" name="phone" autocomplete="tel" maxlength="40"></label>
+        <label class="field"><span class="label">Choose a password</span><input class="input" type="password" name="password" autocomplete="new-password" required minlength="10">
+          <span class="hint">At least 10 characters. A short phrase is easy to remember and hard to guess.</span></label>
+        <div class="hp" aria-hidden="true"><label>Leave this empty<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+        <label class="check field"><input type="checkbox" name="consent" required><span>I am the parent or legal guardian of the children I will add, and I have read and accept the <a href="/privacy" target="_blank" rel="noopener">privacy notice</a>.</span></label>
+        <button class="btn btn-primary" type="submit" data-submit>Create Account <svg class="arrow" viewBox="0 0 18 10" aria-hidden="true"><path d="M0 5h16M12 1l4 4-4 4" fill="none" stroke="currentColor"/></svg></button>
+        <p class="auth-links muted">Already have an account? <a href="/portal">Sign in</a></p>
       </form>
-      <div class="thanks-panel" data-form-thanks hidden tabindex="-1">
-        <span class="eyebrow">Thank You</span>
-        <h2>Your inquiry has been received.</h2>
-        <div class="divider"><svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C13 9 15 11 24 12C15 13 13 15 12 24C11 15 9 13 0 12C9 11 11 9 12 0Z" fill="currentColor"/></svg></div>
-        <p class="lede center">A member of the AHUVAI team will review your details personally and be in touch using your preferred contact method.</p>
-        <a href="/" class="text-link">Return Home</a>
-      </div>
     </div>
   </div>
 </section>

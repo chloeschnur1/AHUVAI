@@ -58,26 +58,17 @@ module.exports = {
   families: [
     {
       family_name: 'The Cohen Family', primary_guardian: 'Sarah Cohen', primary_email: 'sarah.cohen.demo@example.com',
-      login_password: 'demo-password-cohen', status: 'profiles_submitted', preferred_contact: 'WhatsApp',
+      login_password: 'demo-password-cohen', status: 'profiles_submitted', phone: '+1 555 0101',
       travel: { destination: 'Paris, France', start_date: '2026-12-12', end_date: '2026-12-22', modes: ['Plane', 'Car'],
         security: 'Private car from the airport; please do not share the hotel name.' },
       children: [davidAnswers, leahAnswers, benjaminAnswers], submit: true,
     },
     {
       family_name: 'The Levi Family', primary_guardian: 'Miriam Levi', primary_email: 'miriam.levi.demo@example.com',
-      login_password: 'demo-password-levi', status: 'onboarding', preferred_contact: 'Email',
+      login_password: 'demo-password-levi', status: 'onboarding', phone: '',
       travel: { destination: 'Lake Como, Italy', start_date: '2027-07-03', end_date: '2027-07-17', modes: ['Plane'] },
       children: [noamAnswers], submit: false,
     },
-  ],
-  inquiries: [
-    { parent_name: 'Rachel Klein', email: 'rachel.klein.demo@example.com', preferred_contact: 'Phone call', phone: '+1 555 0100',
-      destination: 'Jerusalem, Israel', travel_start: '2027-04-10', travel_end: '2027-04-25', num_children: 2, children_ages: '6 and 3',
-      nanny_type: 'Destination nanny', care_duration: 'Two weeks, daytime', preferences: 'Experience with Passover routines would be wonderful.',
-      cultural_considerations: 'Orthodox family; Shabbat and Yom Tov observant.' },
-    { parent_name: 'Emma Rosen', email: 'emma.rosen.demo@example.com', preferred_contact: 'Email',
-      destination: 'St. Barts', travel_start: '2027-02-14', travel_end: '2027-02-21', num_children: 1, children_ages: '18 months',
-      nanny_type: 'Traveling nanny', care_duration: 'One week', preferences: 'Evening care so we can dine out.' },
   ],
   messages: [
     { name: 'Daniel Weiss', email: 'daniel.weiss.demo@example.com', subject: 'Availability next summer', body: 'Do you arrange care in Greece? We are planning a month in Crete.' },

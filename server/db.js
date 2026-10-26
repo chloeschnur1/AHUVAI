@@ -80,7 +80,7 @@ async function verifyRowLevelSecurity() {
           AND (NOT relrowsecurity OR NOT relforcerowsecurity)`);
     for (const t of tables.rows) problems.push(`Row-level security is off for table ${t.relname}.`);
     // With no role declared, private tables must look empty.
-    for (const t of ['families', 'children', 'child_profiles', 'admin_notes', 'family_users', 'inquiries']) {
+    for (const t of ['families', 'children', 'child_profiles', 'admin_notes', 'family_users', 'messages']) {
       const r = await c.query(`SELECT count(*)::int AS n FROM ${t}`);
       if (r.rows[0].n !== 0) problems.push(`Table ${t} is readable without signing in.`);
     }

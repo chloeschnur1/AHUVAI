@@ -9,7 +9,6 @@
   let me = null;
   let counts = {};
 
-  const INQ_STATUS = { new: 'New', reviewed: 'Reviewed', contacted: 'Contacted', invited: 'Invited', declined: 'Declined', archived: 'Archived' };
   const FAM_STATUS = { contacted: 'Contacted', invited: 'Invited', onboarding: 'Onboarding', profiles_submitted: 'Profiles Submitted',
     ready_for_review: 'Ready for Review', more_info_needed: 'More Information Needed', active: 'Active', archived: 'Archived' };
   const REVIEW = { pending: 'Awaiting Review', ready_for_review: 'Ready for Review', more_info_needed: 'More Information Needed', reviewed: 'Reviewed' };
@@ -102,7 +101,7 @@
   // ------------------------------------------------------------------ shell & routing
 
   const NAV = [
-    ['overview', 'Overview'], ['inquiries', 'New Inquiries'], ['families', 'Families'], ['children', 'Child Profiles'],
+    ['overview', 'Overview'], ['review', 'Awaiting Review'], ['families', 'Families'], ['children', 'Child Profiles'],
     ['submissions', 'Submitted Questionnaires'], ['care', 'Care Preferences'], ['messages', 'Private Feedback'], ['settings', 'Settings'],
   ];
 
@@ -127,7 +126,7 @@
 
   function setCounts() {
     const set = (k, n) => { const el = root.querySelector(`[data-count="${k}"]`); if (el) { el.className = n ? 'count' : ''; el.textContent = n || ''; } };
-    set('inquiries', counts.new_inquiries); set('messages', counts.unread_messages);
+    set('review', counts.awaiting_review); set('messages', counts.unread_messages);
   }
 
   const view = () => document.getElementById('view');
@@ -148,7 +147,7 @@
     root.querySelector('[data-sidenav]').classList.remove('open');
     render('<div class="app-loading">Loading…</div>');
     try {
-      const pages = { overview, inquiries: id ? inquiryDetail : inquiries, families: id ? familyDetail : families, children: id ? childDetail : children,
+      const pages = { overview, review: awaitingReview, families: id ? familyDetail : families, children: id ? childDetail : children,
         submissions, care, messages, settings };
       await pages[key](id);
       view().focus({ preventScroll: true });
@@ -165,8 +164,8 @@
     render(`<div class="page-title"><div><span class="eyebrow">Welcome, ${esc(me.name.split(' ')[0])}</span><h1>Overview</h1></div></div>
       ${me.storage && !me.storage.ready ? `<div class="notice warning"><strong>Secure storage not ready.</strong> Families cannot save profiles until this is resolved: ${esc(me.storage.problems.join(' '))}</div>` : ''}
       <div class="stats">
-        ${stat(s.total_inquiries, 'Family inquiries', '#/inquiries')}
-        ${stat(s.new_inquiries, 'Awaiting review', '#/inquiries', s.new_inquiries > 0)}
+        ${stat(s.awaiting_review, 'Awaiting your review', '#/review', s.awaiting_review > 0)}
+        ${stat(s.new_families, 'New families (30 days)', '#/families')}
         ${stat(s.active_families, 'Active families', '#/families')}
         ${stat(s.child_profiles, 'Child profiles', '#/children')}
         ${stat(s.completed_profiles, 'Submitted profiles', '#/submissions')}
@@ -179,59 +178,20 @@
               <td>${esc(r.family_name)}</td><td>${esc(r.destination || '—')}</td><td>${date(r.submitted_at)}</td><td>${pill(r.review_status, REVIEW)}</td></tr>`).join('')}
           </tbody></table></div>` : '<div class="empty">No profiles have been submitted yet.</div>'}
         </section>
-        <section class="panel"><h2>New inquiries</h2>
-          ${d.inquiries.length ? d.inquiries.map((i) => `<a class="kid-card" href="#/inquiries/${i.id}"><span class="ord">${date(i.created_at)}</span><h3>${esc(i.parent_name)}</h3>
-            <span class="muted">${esc(i.destination)} · ${i.num_children} ${i.num_children === 1 ? 'child' : 'children'}</span></a>`).join('<div class="q-block"></div>') : '<div class="empty">No new inquiries.</div>'}
+        <section class="panel"><h2>Newest families</h2>
+          ${d.newest.length ? d.newest.map((f) => `<a class="kid-card" href="#/families/${f.id}"><span class="ord">Joined ${date(f.created_at)}</span><h3>${esc(f.family_name)}</h3>
+            <span class="muted">${esc(f.destination || 'Destination not yet shared')} · ${plural(f.children, 'child', 'children')}</span><span>${pill(f.status, FAM_STATUS)}</span></a>`).join('<div class="q-block"></div>') : '<div class="empty">No families yet.</div>'}
         </section>
       </div>`);
   }
 
-  // ------------------------------------------------------------------ inquiries
+  // ------------------------------------------------------------------ awaiting review
 
-  let inqFilter = 'new';
-  async function inquiries() {
-    const d = await A.get('/api/admin/inquiries' + (inqFilter ? `?status=${inqFilter}` : ''));
-    render(`<div class="page-title"><div><span class="eyebrow">Concierge Inquiries</span><h1>New Inquiries</h1></div></div>
-      <div class="tabs" role="group" aria-label="Filter by status">
-        ${[['new', 'New'], ['reviewed', 'Reviewed'], ['contacted', 'Contacted'], ['invited', 'Invited'], ['declined', 'Declined'], ['archived', 'Archived'], ['', 'All']]
-          .map(([k, l]) => `<button type="button" data-inq-filter="${k}" aria-pressed="${inqFilter === k}">${l}</button>`).join('')}
-      </div>
-      <section class="panel">${d.inquiries.length ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Table"><table class="data"><thead><tr><th>Parent</th><th>Destination</th><th>Dates</th><th>Children</th><th>Care</th><th>Received</th><th>Status</th></tr></thead><tbody>
-        ${d.inquiries.map((i) => `<tr class="clickable" data-href="#/inquiries/${i.id}"><td><span class="name">${esc(i.parent_name)}</span><span class="sub">${esc(i.email)}</span></td>
-          <td>${esc(i.destination)}</td><td>${range(i.travel_start, i.travel_end)}</td><td>${i.num_children}<span class="sub">Ages ${esc(i.children_ages)}</span></td>
-          <td>${esc(i.nanny_type)}</td><td>${date(i.created_at)}</td><td>${pill(i.status, INQ_STATUS)}</td></tr>`).join('')}
-      </tbody></table></div>` : '<div class="empty">No inquiries in this list.</div>'}</section>`);
-  }
-
-  async function inquiryDetail(id) {
-    const { inquiry: i, notes } = await A.get(`/api/admin/inquiries/${id}`);
-    render(`<a class="crumb" href="#/inquiries">← New Inquiries</a>
-      <div class="family-hero"><span class="eyebrow">Inquiry · ${date(i.created_at)}</span><h1>${esc(i.parent_name)}</h1>
-        <dl class="info">
-          <div><dt>Email</dt><dd><a href="mailto:${esc(i.email)}">${esc(i.email)}</a></dd></div>
-          <div><dt>Phone</dt><dd>${esc(i.phone || '—')}</dd></div>
-          <div><dt>Preferred contact</dt><dd>${esc(i.preferred_contact)}</dd></div>
-          <div><dt>Status</dt><dd>${pill(i.status, INQ_STATUS)}</dd></div>
-          <div><dt>Destination</dt><dd>${esc(i.destination)}</dd></div>
-          <div><dt>Travel dates</dt><dd>${range(i.travel_start, i.travel_end)}</dd></div>
-          <div><dt>Children</dt><dd>${i.num_children} · Ages ${esc(i.children_ages)}</dd></div>
-          <div><dt>Type of care</dt><dd>${esc(i.nanny_type)}</dd></div>
-          <div><dt>Duration</dt><dd>${esc(i.care_duration || '—')}</dd></div>
-          <div class="wide"><dt>Childcare preferences</dt><dd>${esc(i.preferences || '—')}</dd></div>
-          <div class="wide"><dt>Cultural or religious considerations</dt><dd>${esc(i.cultural_considerations || '—')}</dd></div>
-        </dl>
-        <div class="actions-row">
-          <button class="btn btn-small" data-inq-status="reviewed">Mark Reviewed</button>
-          <button class="btn btn-small" data-inq-status="contacted">Mark Contacted</button>
-          <button class="btn btn-small btn-primary" data-invite-inquiry="${i.id}">${i.family_id ? 'Send New Invitation' : 'Invite to Family Portal'}</button>
-          ${i.family_id ? `<a class="btn btn-small btn-quiet" href="#/families/${i.family_id}">Open Family Record</a>` : ''}
-          <button class="btn btn-small btn-quiet" data-inq-status="declined">Decline</button>
-          <button class="btn btn-small btn-quiet" data-inq-status="archived">Archive</button>
-        </div>
-        <div data-invite-result></div>
-      </div>
-      ${notesPanel(notes, { inquiry_id: i.id })}`);
-    view().dataset.inquiry = i.id;
+  async function awaitingReview() {
+    const d = await A.get('/api/admin/families?status=profiles_submitted');
+    render(`<div class="page-title"><div><span class="eyebrow">New Submissions</span><h1>Awaiting Review</h1></div></div>
+      <p class="muted">Families who have submitted their children's profiles. Open a family to review each child, then change the family's status (for example to <em>Contacted</em> or <em>Ready for Review</em>) so it leaves this list.</p>
+      ${familyTable(d.families, 'Nothing is waiting for review.')}`);
   }
 
   function inviteResult(r) {
@@ -267,11 +227,15 @@
         <button class="btn btn-small" type="submit">Filter</button>
         <button class="btn btn-small btn-quiet" type="button" data-clear-filter>Clear</button>
       </form>
-      <section class="panel">${d.families.length ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Table"><table class="data"><thead><tr><th>Family</th><th>Email</th><th>Children</th><th>Destination</th><th>Travel dates</th><th>Submitted</th><th>Status</th></tr></thead><tbody>
-        ${d.families.map((f) => `<tr class="clickable" data-href="#/families/${f.id}"><td><span class="name">${esc(f.family_name)}</span><span class="sub">${esc(f.primary_guardian)}</span></td>
-          <td>${esc(f.primary_email)}</td><td>${f.children}<span class="sub">${f.submitted} submitted</span></td><td>${esc(f.destination || '—')}</td>
-          <td>${range(f.start_date, f.end_date)}</td><td>${date(f.submitted_at)}</td><td>${pill(f.status, FAM_STATUS)} ${f.is_demo ? '<span class="pill demo">Demo</span>' : ''}</td></tr>`).join('')}
-      </tbody></table></div>` : '<div class="empty">No families match.</div>'}</section>`);
+      ${familyTable(d.families, 'No families match.')}`);
+  }
+
+  function familyTable(rows, emptyText) {
+    return `<section class="panel">${rows.length ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Families"><table class="data"><thead><tr><th>Family</th><th>Email</th><th>Children</th><th>Destination</th><th>Travel dates</th><th>Joined</th><th>Submitted</th><th>Status</th></tr></thead><tbody>
+      ${rows.map((f) => `<tr class="clickable" data-href="#/families/${f.id}"><td><span class="name">${esc(f.family_name)}</span><span class="sub">${esc(f.primary_guardian)}</span></td>
+        <td>${esc(f.primary_email)}</td><td>${f.children}<span class="sub">${f.submitted} submitted</span></td><td>${esc(f.destination || '—')}</td>
+        <td>${range(f.start_date, f.end_date)}</td><td>${date(f.created_at)}</td><td>${date(f.submitted_at)}</td><td>${pill(f.status, FAM_STATUS)} ${f.is_demo ? '<span class="pill demo">Demo</span>' : ''}</td></tr>`).join('')}
+    </tbody></table></div>` : `<div class="empty">${emptyText}</div>`}</section>`;
   }
 
   async function familyDetail(id) {
@@ -311,7 +275,7 @@
           <div><button class="btn btn-primary btn-small" type="submit">Send Request</button></div>
         </form>
         <form class="inline-form" data-panel="delete-family" data-delete-family hidden novalidate>
-          <p class="notice error">This permanently deletes the family, every child profile, their account and original inquiry. Export the record first if you need a copy. This cannot be undone.</p>
+          <p class="notice error">This permanently deletes the family, every child profile and their account. Export the record first if you need a copy. This cannot be undone.</p>
           <label class="field"><span class="label">Type <strong>${esc(f.family_name)}</strong> to confirm</span><input class="input" name="confirm" autocomplete="off"></label>
           <div><button class="btn btn-small danger" type="submit">Permanently Delete</button></div>
         </form>
@@ -326,11 +290,7 @@
               ${c.missing.length ? `<span class="missing">Incomplete: ${c.missing.map((k) => esc(SECTION_TITLE[k])).join(', ')}</span>` : ''}
               <span class="open">View Full Profile →</span></a>`).join('')}</div>` : '<div class="empty">The family has not added any children yet.</div>'}
           </section>
-          ${d.inquiry ? `<section class="panel"><h2>Original inquiry <small>${date(d.inquiry.created_at)}</small></h2><dl class="info">
-            <div><dt>Type of care</dt><dd>${esc(d.inquiry.nanny_type)}</dd></div><div><dt>Duration</dt><dd>${esc(d.inquiry.care_duration || '—')}</dd></div>
-            <div><dt>Ages</dt><dd>${esc(d.inquiry.children_ages)}</dd></div>
-            <div class="wide"><dt>Preferences</dt><dd>${esc(d.inquiry.preferences || '—')}</dd></div>
-            <div class="wide"><dt>Cultural considerations</dt><dd>${esc(d.inquiry.cultural_considerations || '—')}</dd></div></dl></section>` : ''}
+
           <section class="panel"><h2>Portal access</h2>
             ${d.users.length ? d.users.map((u) => `<p>${esc(u.name)} · ${esc(u.email)}<span class="sub muted"> Account created ${date(u.created_at)} · Last sign-in ${date(u.last_login_at)}</span></p>`).join('')
               : `<p class="muted">No account yet. ${d.invites[0] ? `Latest invitation sent ${date(d.invites[0].created_at)}, expires ${date(d.invites[0].expires_at)}.` : ''}</p>`}
@@ -484,12 +444,11 @@
         <section class="panel"><h2>Data retention</h2>
           <p class="muted">Families archived, or inactive for more than ${d.retentionMonths} months. Review each and delete those you no longer need (open the family, export if required, then delete).</p>
           ${d.retention.length ? `<ul>${d.retention.map((r) => `<li><a href="#/families/${r.id}">${esc(r.family_name)}</a> · ${esc(FAM_STATUS[r.status])} · last activity ${date(r.updated_at)}</li>`).join('')}</ul>` : '<p>None at the moment.</p>'}
-          <p>${d.oldInquiries} declined or archived ${d.oldInquiries === 1 ? 'inquiry is' : 'inquiries are'} older than ${d.retentionMonths} months.</p>
-          ${d.oldInquiries ? '<button class="btn btn-small btn-quiet danger" data-purge-inquiries>Delete Old Inquiries</button>' : ''}</section>
+        </section>
         <section class="panel"><h2>Demonstration data</h2>
           <p class="muted">Fictional families created for testing are marked “Demo”. Remove them all before welcoming real clients.</p>
-          <p>${plural(d.demo.families, 'demo family', 'demo families')} · ${plural(d.demo.inquiries, 'demo inquiry', 'demo inquiries')} · ${plural(d.demo.messages, 'demo message', 'demo messages')}</p>
-          ${d.demo.families + d.demo.inquiries + d.demo.messages ? '<button class="btn btn-small danger" data-remove-demo>Remove All Demonstration Data</button>' : ''}</section>
+          <p>${plural(d.demo.families, 'demo family', 'demo families')} · ${plural(d.demo.messages, 'demo message', 'demo messages')}</p>
+          ${d.demo.families + d.demo.messages ? '<button class="btn btn-small danger" data-remove-demo>Remove All Demonstration Data</button>' : ''}</section>
       </div>
       <section class="panel"><h2>Recent activity <small>Sign-ins, views and changes — never questionnaire content</small></h2><div data-audit><button class="btn btn-small btn-quiet" data-load-audit>Show Activity Log</button></div></section>`);
   }
@@ -502,16 +461,6 @@
     const t = e.target.closest('button');
     if (!t) return;
     try {
-      if (t.dataset.inqFilter !== undefined) { inqFilter = t.dataset.inqFilter; await inquiries(); return; }
-      if (t.dataset.inqStatus) {
-        await A.patch(`/api/admin/inquiries/${view().dataset.inquiry}`, { status: t.dataset.inqStatus });
-        toast(`Marked ${INQ_STATUS[t.dataset.inqStatus]}.`); await inquiryDetail(view().dataset.inquiry); refreshCounts(); return;
-      }
-      if (t.dataset.inviteInquiry) {
-        t.disabled = true;
-        const r = await A.post(`/api/admin/inquiries/${t.dataset.inviteInquiry}/invite`);
-        await inquiryDetail(t.dataset.inviteInquiry); inviteResult(r); refreshCounts(); return;
-      }
       if (t.dataset.toggle) { const p = view().querySelector(`[data-panel="${t.dataset.toggle}"]`); p.hidden = !p.hidden; return; }
       if (t.dataset.clearFilter !== undefined) { Object.keys(famFilter).forEach((k) => { famFilter[k] = ''; }); await families(); return; }
       if (t.dataset.familyInvite !== undefined) {
@@ -539,13 +488,9 @@
       if (t.dataset.msgDelete) { if (!confirm('Delete this message permanently?')) return; await A.del(`/api/admin/messages/${t.dataset.msgDelete}`); await messages(); refreshCounts(); return; }
       if (t.dataset.removeAdmin) { if (!confirm('Remove this administrator? They will be signed out immediately.')) return; await A.del(`/api/admin/admins/${t.dataset.removeAdmin}`); await settings(); return; }
       if (t.dataset.removeDemo !== undefined) {
-        if (!confirm('Permanently remove all demonstration families, inquiries and messages?')) return;
+        if (!confirm('Permanently remove all demonstration families and messages?')) return;
         const r = await A.del('/api/admin/demo-data');
-        toast(`Removed ${r.removed.families} families, ${r.removed.inquiries} inquiries, ${r.removed.messages} messages.`); await settings(); return;
-      }
-      if (t.dataset.purgeInquiries !== undefined) {
-        if (!confirm('Permanently delete old declined and archived inquiries?')) return;
-        const r = await A.del('/api/admin/old-inquiries'); toast(`Deleted ${r.removed} inquiries.`); await settings(); return;
+        toast(`Removed ${plural(r.removed.families, 'family', 'families')} and ${plural(r.removed.messages, 'message', 'messages')}.`); await settings(); return;
       }
       if (t.dataset.totpSetup !== undefined) {
         const r = await A.post('/api/admin/me/totp/setup');
@@ -566,7 +511,7 @@
 
   root.addEventListener('change', async (e) => {
     if (e.target.matches('[data-family-status]')) {
-      try { await A.patch(`/api/admin/families/${currentId()}`, { status: e.target.value }); toast(`Family marked ${FAM_STATUS[e.target.value]}.`); }
+      try { await A.patch(`/api/admin/families/${currentId()}`, { status: e.target.value }); toast(`Family marked ${FAM_STATUS[e.target.value]}.`); refreshCounts(); }
       catch (err) { fail(err); }
     }
   });

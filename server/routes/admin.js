@@ -18,7 +18,6 @@ const router = express.Router();
 const loginLimit = rateLimit({ windowMs: 15 * 60e3, limit: 15, standardHeaders: true, legacyHeaders: false,
   message: { error: 'Too many attempts. Please wait a few minutes and try again.' } });
 
-const INQUIRY_STATUSES = ['new', 'reviewed', 'contacted', 'invited', 'declined', 'archived'];
 const FAMILY_STATUSES = ['contacted', 'invited', 'onboarding', 'profiles_submitted', 'ready_for_review', 'more_info_needed', 'active', 'archived'];
 const REVIEW_STATUSES = ['pending', 'ready_for_review', 'more_info_needed', 'reviewed'];
 
@@ -108,8 +107,8 @@ router.get('/overview', async (req, res, next) => {
   try {
     const data = await q(req, async (c) => {
       const stats = (await c.query(`SELECT
-        (SELECT count(*) FROM inquiries)::int AS total_inquiries,
-        (SELECT count(*) FROM inquiries WHERE status = 'new')::int AS new_inquiries,
+        (SELECT count(*) FROM families WHERE created_at > now() - interval '30 days')::int AS new_families,
+        (SELECT count(*) FROM families WHERE status = 'profiles_submitted')::int AS awaiting_review,
         (SELECT count(*) FROM families WHERE status <> 'archived')::int AS active_families,
         (SELECT count(*) FROM children)::int AS child_profiles,
         (SELECT count(*) FROM child_profiles WHERE submitted_at IS NOT NULL)::int AS completed_profiles,
@@ -119,55 +118,16 @@ router.get('/overview', async (req, res, next) => {
           f.id AS family_id, f.family_name, f.travel->>'destination' AS destination, p.submitted_at, p.review_status, p.completion_status
         FROM child_profiles p JOIN children c ON c.id = p.child_id JOIN families f ON f.id = p.family_id
         WHERE p.submitted_at IS NOT NULL ORDER BY p.submitted_at DESC LIMIT 8`)).rows;
-      const inquiries = (await c.query(`SELECT id, parent_name, destination, num_children, created_at, status FROM inquiries
-        WHERE status = 'new' ORDER BY created_at DESC LIMIT 5`)).rows;
-      return { stats, recent: recent.map((r) => ({ ...r, age_label: schema.ageLabel(r.dob) })), inquiries };
+      const newest = (await c.query(`SELECT f.id, f.family_name, f.primary_guardian, f.status, f.created_at, f.travel->>'destination' AS destination,
+          (SELECT count(*) FROM children c WHERE c.family_id = f.id)::int AS children
+        FROM families f ORDER BY f.created_at DESC LIMIT 5`)).rows;
+      return { stats, recent: recent.map((r) => ({ ...r, age_label: schema.ageLabel(r.dob) })), newest };
     });
     res.json(data);
   } catch (err) { next(err); }
 });
 
-// ---------------------------------------------------------------- inquiries
-
-router.get('/inquiries', async (req, res, next) => {
-  try {
-    const st = INQUIRY_STATUSES.includes(req.query.status) ? req.query.status : null;
-    const rows = await q(req, async (c) => (await c.query(
-      `SELECT id, parent_name, email, preferred_contact, destination, to_char(travel_start,'YYYY-MM-DD') AS travel_start,
-              to_char(travel_end,'YYYY-MM-DD') AS travel_end, num_children, children_ages, nanny_type, status, family_id, created_at
-         FROM inquiries WHERE ($1::text IS NULL OR status = $1) ORDER BY created_at DESC LIMIT 500`, [st])).rows);
-    res.json({ inquiries: rows });
-  } catch (err) { next(err); }
-});
-
-router.get('/inquiries/:id', async (req, res, next) => {
-  try {
-    const id = v.uuid(req.params.id);
-    const data = await q(req, async (c) => {
-      const r = await c.query(`SELECT *, to_char(travel_start,'YYYY-MM-DD') AS travel_start, to_char(travel_end,'YYYY-MM-DD') AS travel_end
-        FROM inquiries WHERE id = $1`, [id]);
-      if (!r.rows[0]) return null;
-      const notes = (await c.query('SELECT id, author_name, body, created_at FROM admin_notes WHERE inquiry_id = $1 ORDER BY created_at DESC', [id])).rows;
-      return { inquiry: r.rows[0], notes };
-    });
-    if (!data) return res.status(404).json({ error: 'Not found.' });
-    res.json(data);
-  } catch (err) { next(err); }
-});
-
-router.patch('/inquiries/:id', async (req, res, next) => {
-  try {
-    const id = v.uuid(req.params.id);
-    const st = v.oneOf(req.body?.status, INQUIRY_STATUSES, { label: 'a status', required: true });
-    const n = await q(req, async (c) => {
-      const r = await c.query('UPDATE inquiries SET status = $2, updated_at = now() WHERE id = $1', [id, st]);
-      await db.audit(c, req.actor, `inquiry.status.${st}`, 'inquiry', id);
-      return r.rowCount;
-    });
-    if (!n) return res.status(404).json({ error: 'Not found.' });
-    res.json({ ok: true });
-  } catch (err) { next(err); }
-});
+// ---------------------------------------------------------------- invitations (families added by AHUVAI)
 
 function familyNameFrom(parentName) {
   const parts = parentName.trim().split(/\s+/);
@@ -192,36 +152,6 @@ async function sendInvitationEmail(email, guardian, url) {
     button: { label: 'Create Your Account', url },
   });
 }
-
-router.post('/inquiries/:id/invite', async (req, res, next) => {
-  try {
-    const id = v.uuid(req.params.id);
-    const result = await q(req, async (c) => {
-      const inq = (await c.query(`SELECT *, to_char(travel_start,'YYYY-MM-DD') AS ts, to_char(travel_end,'YYYY-MM-DD') AS te FROM inquiries WHERE id = $1`, [id])).rows[0];
-      if (!inq) return null;
-      let familyId = inq.family_id;
-      if (!familyId) {
-        const existingUser = await c.query('SELECT family_id FROM family_users WHERE email = $1', [inq.email]);
-        if (existingUser.rows[0]) {
-          familyId = existingUser.rows[0].family_id;
-        } else {
-          const travel = schema.sanitizeFamilyTravel({ destination: inq.destination, start_date: inq.ts, end_date: inq.te });
-          familyId = (await c.query(`INSERT INTO families (family_name, primary_guardian, primary_email, phone, preferred_contact, travel, inquiry_id, status, is_demo)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,'invited',$8) RETURNING id`,
-            [familyNameFrom(inq.parent_name), inq.parent_name, inq.email, inq.phone, inq.preferred_contact, travel, inq.id, inq.is_demo])).rows[0].id;
-        }
-        await c.query(`UPDATE inquiries SET family_id = $2 WHERE id = $1`, [id, familyId]);
-      }
-      await c.query(`UPDATE inquiries SET status = 'invited', updated_at = now() WHERE id = $1`, [id]);
-      const url = await createInvitation(c, familyId, inq.email);
-      await db.audit(c, req.actor, 'inquiry.invited', 'family', familyId);
-      return { familyId, url, email: inq.email, guardian: inq.parent_name };
-    });
-    if (!result) return res.status(404).json({ error: 'Not found.' });
-    const mail = await sendInvitationEmail(result.email, result.guardian, result.url);
-    res.json({ ok: true, familyId: result.familyId, inviteUrl: result.url, emailSent: mail.sent, emailNote: mail.reason || null });
-  } catch (err) { next(err); }
-});
 
 // ---------------------------------------------------------------- families
 
@@ -279,9 +209,8 @@ router.get('/families/:id', async (req, res, next) => {
       const users = (await c.query('SELECT name, email, created_at, last_login_at FROM family_users WHERE family_id = $1', [id])).rows;
       const notes = (await c.query('SELECT id, child_id, author_name, body, created_at FROM admin_notes WHERE family_id = $1 AND child_id IS NULL ORDER BY created_at DESC', [id])).rows;
       const invites = (await c.query(`SELECT created_at, expires_at, accepted_at FROM invitations WHERE family_id = $1 AND kind = 'invite' ORDER BY created_at DESC LIMIT 5`, [id])).rows;
-      const inquiry = f.inquiry_id ? (await c.query(`SELECT id, created_at, nanny_type, care_duration, children_ages, preferences, cultural_considerations FROM inquiries WHERE id = $1`, [f.inquiry_id])).rows[0] : null;
       await db.audit(c, req.actor, 'family.viewed', 'family', id);
-      return { family: f, children, users, notes, invites, inquiry };
+      return { family: f, children, users, notes, invites };
     });
     if (!data) return res.status(404).json({ error: 'Not found.' });
     res.json(data);
@@ -390,7 +319,6 @@ router.get('/families/:id/export', async (req, res, next) => {
       const f = (await c.query('SELECT * FROM families WHERE id = $1', [id])).rows[0];
       if (!f) return null;
       const users = (await c.query('SELECT name, email, created_at, last_login_at FROM family_users WHERE family_id = $1', [id])).rows;
-      const inquiry = f.inquiry_id ? (await c.query('SELECT * FROM inquiries WHERE id = $1', [f.inquiry_id])).rows[0] : null;
       const kids = await profiles.listChildren(c, id);
       const messages = (await c.query(`SELECT subject, body, created_at FROM messages WHERE family_id = $1`, [id])).rows;
       await db.audit(c, req.actor, 'family.exported', 'family', id);
@@ -399,7 +327,6 @@ router.get('/families/:id/export', async (req, res, next) => {
         family: { name: f.family_name, primary_guardian: f.primary_guardian, email: f.primary_email, phone: f.phone,
           preferred_contact: f.preferred_contact, status: f.status, travel: f.travel, privacy_consent_at: f.privacy_consent_at, created_at: f.created_at },
         account_holders: users,
-        inquiry,
         children: kids.map((k) => ({
           ...profiles.summary(k),
           submitted_answers: k.submitted_answers_enc ? sec.decryptJSON(k.submitted_answers_enc) : null,
@@ -421,11 +348,10 @@ router.delete('/families/:id', async (req, res, next) => {
   try {
     const id = v.uuid(req.params.id);
     const result = await q(req, async (c) => {
-      const f = (await c.query('SELECT family_name, inquiry_id FROM families WHERE id = $1', [id])).rows[0];
+      const f = (await c.query('SELECT family_name FROM families WHERE id = $1', [id])).rows[0];
       if (!f) return null;
       if (String(req.body?.confirm || '').trim() !== f.family_name) return { mismatch: true };
       await c.query('DELETE FROM families WHERE id = $1', [id]);
-      await c.query('DELETE FROM inquiries WHERE id = $1 OR family_id = $2', [f.inquiry_id, id]);
       await db.audit(c, req.actor, 'family.deleted', 'family', id);
       return { ok: true };
     });
@@ -531,12 +457,11 @@ router.post('/notes', async (req, res, next) => {
     const body = v.text(b.body, { label: 'a note', max: 5000, required: true });
     const familyId = b.family_id ? v.uuid(b.family_id) : null;
     const childId = b.child_id ? v.uuid(b.child_id) : null;
-    const inquiryId = b.inquiry_id ? v.uuid(b.inquiry_id) : null;
-    if (!familyId && !inquiryId) throw new v.ValidationError('A note must belong to a family or an inquiry.');
+    if (!familyId) throw new v.ValidationError('A note must belong to a family.');
     const note = await q(req, async (c) => {
       const me = (await c.query('SELECT name FROM admin_users WHERE id = $1', [req.actor.userId])).rows[0];
-      return (await c.query(`INSERT INTO admin_notes (family_id, child_id, inquiry_id, author_id, author_name, body)
-        VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, author_name, body, created_at`, [familyId, childId, inquiryId, req.actor.userId, me.name, body])).rows[0];
+      return (await c.query(`INSERT INTO admin_notes (family_id, child_id, author_id, author_name, body)
+        VALUES ($1,$2,$3,$4,$5) RETURNING id, author_name, body, created_at`, [familyId, childId, req.actor.userId, me.name, body])).rows[0];
     });
     res.status(201).json({ note });
   } catch (err) { next(err); }
@@ -582,11 +507,10 @@ router.get('/settings', async (req, res, next) => {
     const data = await q(req, async (c) => {
       const admins = (await c.query('SELECT id, name, email, totp_enabled, created_at, last_login_at FROM admin_users ORDER BY created_at')).rows;
       const demo = (await c.query(`SELECT (SELECT count(*) FROM families WHERE is_demo)::int AS families,
-        (SELECT count(*) FROM inquiries WHERE is_demo)::int AS inquiries, (SELECT count(*) FROM messages WHERE is_demo)::int AS messages`)).rows[0];
+        (SELECT count(*) FROM messages WHERE is_demo)::int AS messages`)).rows[0];
       const retention = (await c.query(`SELECT id, family_name, status, updated_at FROM families
         WHERE status = 'archived' OR updated_at < now() - ($1 || ' months')::interval ORDER BY updated_at LIMIT 200`, [String(config.retentionMonths)])).rows;
-      const oldInquiries = (await c.query(`SELECT count(*)::int AS n FROM inquiries WHERE status IN ('declined','archived') AND updated_at < now() - ($1 || ' months')::interval`, [String(config.retentionMonths)])).rows[0].n;
-      return { admins, demo, retention, oldInquiries };
+      return { admins, demo, retention };
     });
     res.json({ ...data, meId: req.actor.userId, emailConfigured: mailer.isConfigured(), storage: status.get(),
       retentionMonths: config.retentionMonths, publicUrl: config.publicUrl });
@@ -686,24 +610,11 @@ router.delete('/demo-data', async (req, res, next) => {
   try {
     const counts = await q(req, async (c) => {
       const f = await c.query('DELETE FROM families WHERE is_demo');
-      const i = await c.query('DELETE FROM inquiries WHERE is_demo');
       const m = await c.query('DELETE FROM messages WHERE is_demo');
       await db.audit(c, req.actor, 'demo_data.removed');
-      return { families: f.rowCount, inquiries: i.rowCount, messages: m.rowCount };
+      return { families: f.rowCount, messages: m.rowCount };
     });
     res.json({ ok: true, removed: counts });
-  } catch (err) { next(err); }
-});
-
-router.delete('/old-inquiries', async (req, res, next) => {
-  try {
-    const n = await q(req, async (c) => {
-      const r = await c.query(`DELETE FROM inquiries WHERE family_id IS NULL AND status IN ('declined','archived')
-        AND updated_at < now() - ($1 || ' months')::interval`, [String(config.retentionMonths)]);
-      await db.audit(c, req.actor, 'inquiries.retention_purge');
-      return r.rowCount;
-    });
-    res.json({ ok: true, removed: n });
   } catch (err) { next(err); }
 });
 

@@ -77,7 +77,7 @@ function totpFromPage(secret) {
     await adm.fill('[name=password]', 'owner-password-123');
     await adm.click('button[type=submit]');
     await adm.waitForSelector('.stats');
-    assert.equal(await adm.textContent('[data-count="inquiries"]'), '2', 'sidebar shows new inquiry count');
+    assert.equal(await adm.textContent('[data-count="review"]'), '1', 'sidebar shows families awaiting review');
     assert.equal(await adm.textContent('[data-count="messages"]'), '2', 'sidebar shows unread messages');
 
     await adm.click('[data-nav=settings]');
@@ -122,26 +122,22 @@ function totpFromPage(secret) {
     await shot(adm, '32-admin-settings', true);
     step('add/remove administrator, change password, activity log');
 
-    // ---------------------------------------------------------------- inquiries
-    await adm.click('[data-nav=inquiries]');
+    // ---------------------------------------------------------------- awaiting review
+    await adm.click('[data-nav=review]');
     await adm.waitForSelector('tr[data-href]');
-    assert.equal(await adm.locator('tr[data-href]').count(), 2);
-    await adm.click('tr:has-text("Rachel Klein")');
-    await adm.waitForSelector('.family-hero h1:has-text("Rachel Klein")');
-    assert.ok((await adm.textContent('#view')).includes('Shabbat and Yom Tov observant'));
-    await adm.click('[data-inq-status=contacted]');
+    assert.equal(await adm.locator('tr[data-href]').count(), 1);
+    assert.ok((await adm.textContent('tbody')).includes('The Cohen Family'));
+    await adm.click('tr:has-text("The Cohen Family")');
+    await adm.waitForSelector('[data-family-status]');
+    await adm.selectOption('[data-family-status]', 'contacted');
     await toast(adm, /Contacted/);
     await adm.fill('[data-add-note] textarea', 'Spoke by phone — lovely family.');
     await adm.click('[data-add-note] button');
     await adm.waitForSelector('.note-item');
-    await adm.click('[data-inq-status=declined]');
-    await toast(adm);
-    await adm.click('.crumb');
-    await adm.click('[data-inq-filter="declined"]');
-    await adm.waitForSelector('tr:has-text("Rachel Klein")');
-    await adm.click('[data-inq-filter=""]');
-    await adm.waitForFunction(() => document.querySelectorAll('tr[data-href]').length === 2);
-    step('inquiry review, contacted/declined statuses, filters, private note');
+    await adm.click('[data-nav=review]');
+    await adm.waitForSelector('text=Nothing is waiting for review.');
+    assert.equal(await adm.textContent('[data-count="review"]'), '', 'count clears once the family is marked Contacted');
+    step('awaiting review list, marking a family Contacted, private note');
 
     // ---------------------------------------------------------------- families
     await adm.click('[data-nav=families]');

@@ -1,4 +1,4 @@
-/* Public website: navigation, gentle reveal animations, inquiry and contact forms. */
+/* Public website: navigation, gentle reveal animations, sign-up and contact forms. */
 (function () {
   'use strict';
   const A = window.Ahuvai;
@@ -40,6 +40,7 @@
       button.disabled = true;
       try {
         await A.post(form.dataset.apiForm, data);
+        if (form.dataset.redirect) { location.href = form.dataset.redirect; return; }
         form.hidden = true;
         const thanks = wrap.querySelector('[data-form-thanks]');
         thanks.hidden = false;

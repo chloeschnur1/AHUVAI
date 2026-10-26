@@ -1,5 +1,5 @@
 'use strict';
-// Creates fictional demonstration families, children, inquiries and messages.
+// Creates fictional demonstration families, children and messages.
 // Usage: npm run seed:demo
 const db = require('../server/db');
 const profiles = require('../server/profiles');
@@ -14,8 +14,8 @@ async function seed() {
     if (existing.rows[0].n > 0) { console.log('Demonstration data already exists — nothing to do.'); return; }
     for (const f of demo.families) {
       const travel = schema.sanitizeFamilyTravel(f.travel);
-      const fam = await c.query(`INSERT INTO families (family_name, primary_guardian, primary_email, preferred_contact, travel, status, privacy_consent_at, is_demo)
-        VALUES ($1,$2,$3,$4,$5,'onboarding', now(), true) RETURNING id`, [f.family_name, f.primary_guardian, f.primary_email, f.preferred_contact, travel]);
+      const fam = await c.query(`INSERT INTO families (family_name, primary_guardian, primary_email, phone, travel, status, privacy_consent_at, is_demo)
+        VALUES ($1,$2,$3,$4,$5,'onboarding', now(), true) RETURNING id`, [f.family_name, f.primary_guardian, f.primary_email, f.phone || null, travel]);
       const familyId = fam.rows[0].id;
       await c.query('INSERT INTO family_users (family_id, email, name, password_hash) VALUES ($1,$2,$3,$4)',
         [familyId, f.primary_email, f.primary_guardian, hashPassword(f.login_password)]);
@@ -31,17 +31,10 @@ async function seed() {
       await c.query('UPDATE families SET status = $2, submitted_at = CASE WHEN $3 THEN now() END WHERE id = $1', [familyId, f.status, f.submit]);
       console.log(`Created ${f.family_name} — portal sign in: ${f.primary_email} / ${f.login_password}`);
     }
-    for (const i of demo.inquiries) {
-      await c.query(`INSERT INTO inquiries (parent_name, email, phone, preferred_contact, destination, travel_start, travel_end, num_children,
-          children_ages, nanny_type, care_duration, preferences, cultural_considerations, consent_at, is_demo)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13, now(), true)`,
-        [i.parent_name, i.email, i.phone || null, i.preferred_contact, i.destination, i.travel_start, i.travel_end, i.num_children,
-          i.children_ages, i.nanny_type, i.care_duration, i.preferences, i.cultural_considerations || null]);
-    }
     for (const m of demo.messages) {
       await c.query(`INSERT INTO messages (source, name, email, subject, body, is_demo) VALUES ('contact_form',$1,$2,$3,$4,true)`, [m.name, m.email, m.subject, m.body]);
     }
-    console.log(`Created ${demo.inquiries.length} demo inquiries and ${demo.messages.length} demo message.`);
+    console.log(`Created ${demo.messages.length} demo message.`);
   });
 }
 

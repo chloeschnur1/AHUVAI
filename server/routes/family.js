@@ -10,6 +10,7 @@ const auth = require('../auth');
 const status = require('../status');
 const v = require('../validate');
 const profiles = require('../profiles');
+const { notifyOwner } = require('./public');
 const schema = require('../../public/js/questionnaire-schema');
 const { hashPassword, verifyPassword, DUMMY_HASH, passwordProblem, sha256, randomToken, decryptJSON } = require('../security');
 
@@ -42,6 +43,45 @@ router.post('/login', loginLimit, async (req, res, next) => {
     await db.withContext({ role: 'family', familyId: user.family_id, userId: user.id },
       (c) => db.audit(c, { kind: 'family', userId: user.id }, 'family.login', 'family', user.family_id));
     res.json({ ok: true });
+  } catch (err) { next(err); }
+});
+
+const registerLimit = rateLimit({ windowMs: 60 * 60e3, limit: 8, standardHeaders: true, legacyHeaders: false,
+  message: { error: 'Several accounts have been created from this connection. Please try again later.' } });
+
+function familyNameFrom(name) {
+  const parts = name.trim().split(/\s+/);
+  return `The ${parts[parts.length - 1]} Family`;
+}
+
+// Families create their own account, then add children and complete their profiles.
+router.post('/register', registerLimit, status.requireReady, async (req, res, next) => {
+  try {
+    const b = req.body || {};
+    if (b.website) return res.status(201).json({ ok: true }); // spam trap field
+    const name = v.text(b.name, { label: 'your name', max: 120, required: true });
+    const email = v.email(b.email);
+    const phone = v.text(b.phone, { label: 'phone number', max: 40 });
+    const problem = passwordProblem(b.password);
+    if (problem) throw new v.ValidationError(problem);
+    if (b.consent !== true) throw new v.ValidationError('Please confirm that you are the parent or guardian and accept the privacy notice.');
+    const hash = hashPassword(b.password);
+    const created = await db.withContext({ role: 'system' }, async (c) => {
+      const exists = await c.query('SELECT 1 FROM family_users WHERE email = $1', [email]);
+      if (exists.rowCount) return null;
+      const familyId = (await c.query(`INSERT INTO families (family_name, primary_guardian, primary_email, phone, status, privacy_consent_at)
+        VALUES ($1, $2, $3, $4, 'onboarding', now()) RETURNING id`, [familyNameFrom(name), name, email, phone || null])).rows[0].id;
+      const userId = (await c.query('INSERT INTO family_users (family_id, email, name, password_hash) VALUES ($1,$2,$3,$4) RETURNING id',
+        [familyId, email, name, hash])).rows[0].id;
+      await db.audit(c, { kind: 'family', userId }, 'family.registered', 'family', familyId);
+      return { familyId, userId };
+    });
+    if (!created) {
+      return res.status(400).json({ error: 'An account already exists for this email address. Please sign in, or use "Forgotten your password?" on the sign-in page.' });
+    }
+    await auth.startSession(res, 'family', created.userId, created.familyId);
+    notifyOwner('A new family has joined AHUVAI');
+    res.status(201).json({ ok: true });
   } catch (err) { next(err); }
 });
 

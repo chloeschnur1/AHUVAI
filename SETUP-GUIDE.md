@@ -11,20 +11,23 @@ AHUVAI is one website application with three parts that share one secure databas
 
 | Part | Address (example) | Who uses it |
 |---|---|---|
-| **Public website** (home, story, services, approach, contact, inquiry form) | `portal.ahuvai.com/` | Anyone |
+| **Public website** (home, story, services, approach, contact, family sign-up) | `portal.ahuvai.com/` | Anyone |
 | **Private Family Portal** (My Family dashboard and the 13-step child questionnaire) | `portal.ahuvai.com/portal` | Families you invite |
-| **Administrator Dashboard** (inquiries, families, child profiles, notes) | `portal.ahuvai.com/admin` | You, plus any administrators you add |
+| **Administrator Dashboard** (families awaiting review, child profiles, notes) | `portal.ahuvai.com/admin` | You, plus any administrators you add |
 
 ### How a family moves through the system
 
-1. A family fills in the **Begin Your Family Experience** inquiry form.
-2. It appears in your dashboard under **New Inquiries**. You review it, and mark it *Reviewed* or *Contacted*.
-3. When you're ready, you click **Invite to Family Portal**. AHUVAI emails the family a private,
-   single-use link. If email isn't set up yet, the dashboard shows you the link so you can send it yourself.
-4. The parent creates a password, adds each child, and completes a profile for each one. Answers save as they type.
-5. They submit each profile, or all profiles together. You see the family under **Families** and each
-   child as a separate profile.
-6. You review each child, mark them *Ready for Review* or *More Information Needed*, and keep private notes.
+1. A family clicks **Begin Your Family Experience** on the website and creates their own private
+   account: name, email, optional phone, and a password.
+2. They go straight into the portal, add each child, and complete a profile for each one. Answers
+   save automatically as they type, so they can stop and come back.
+3. They submit each profile, or all of them together.
+4. The family appears in your dashboard under **Awaiting Review**, with each child as a separate profile.
+5. You review each child, keep private notes, and contact the family yourself. Then change the
+   family's status (for example to *Contacted*) and they leave the Awaiting Review list.
+
+You can also add a family yourself (**Families → Add a Family**), for example someone introduced
+personally. AHUVAI then creates a private invitation link for them.
 
 ---
 
@@ -35,7 +38,7 @@ application at a subdomain such as **`portal.ahuvai.com`**.
 
 - Squarespace stays your marketing site. Nothing on it is overwritten.
 - On Squarespace, add a navigation link **"Family Portal"** → `https://portal.ahuvai.com/portal`,
-  and point your "Begin" or "Inquire" button → `https://portal.ahuvai.com/begin`.
+  and point your "Begin" button → `https://portal.ahuvai.com/begin`.
 - The portal application also includes complete, matching public pages. Later, if you'd like one
   site instead of two, you can point `ahuvai.com` itself at this application and retire Squarespace.
   This is optional and can wait.
@@ -111,8 +114,8 @@ problem listed there is fixed.
 
 | Section | What it's for |
 |---|---|
-| **Overview** | Totals (inquiries, new inquiries, active families, child profiles, completed, incomplete) and recent submissions |
-| **New Inquiries** | Review requests. Mark *Reviewed*, *Contacted*, *Declined* or *Archived*. **Invite to Family Portal** sends the private invitation |
+| **Overview** | Totals (awaiting review, new families, active families, child profiles, submitted, incomplete), recent submissions, newest families |
+| **Awaiting Review** | Families who have submitted their children's profiles and are waiting for you. Change a family's status once you've contacted them |
 | **Families** | Search by name or email, and filter by status, destination or travel dates. Open a family to see its record |
 | **Family record** | Contact and travel details, a status menu (Contacted → Onboarding → Profiles Submitted → Ready for Review / More Information Needed → Active → Archived), one card per child, private notes, *Send Reminder*, *Request More Information*, *Export Record*, *Delete Family* |
 | **Child profile** | All ten sections the parent submitted, with dates. Switch between siblings with the tabs at the top. Incomplete sections are flagged. Your review buttons and private notes are here too |
@@ -145,7 +148,7 @@ To try everything with fictional families, a technical helper can run `npm run s
   Portal sign-in: `sarah.cohen.demo@example.com` / `demo-password-cohen`
 - **The Levi Family**: one child, profile in progress.
   Portal sign-in: `miriam.levi.demo@example.com` / `demo-password-levi`
-- Two demo inquiries and one demo contact message.
+- One demo contact message.
 
 Everything demo is labeled **Demo**. When you're done, go to **Settings → Demonstration data →
 Remove All Demonstration Data**.
@@ -161,7 +164,7 @@ To send email automatically, sign up with an email-sending provider. Postmark, R
 Google Workspace SMTP all work. Then fill in these settings in Render → Environment:
 `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` (for example,
 `AHUVAI <concierge@ahuvai.com>`). Optionally set `OWNER_NOTIFICATION_EMAIL` to receive a short
-alert when an inquiry or profile arrives. The provider will ask you to add a few DNS records,
+alert when a family signs up or submits profiles. The provider will ask you to add a few DNS records,
 which again doesn't affect your existing website.
 
 Emails never include children's information, only a short note and a sign-in button.

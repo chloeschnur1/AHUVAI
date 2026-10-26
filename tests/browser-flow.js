@@ -37,66 +37,26 @@ const CHILDREN = [
   const step = (msg) => console.log('  ✓ ' + msg);
 
   try {
-    // ---------------------------------------------------------------- 1. inquiry
-    const visitor = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-    const pub = await newPage(visitor);
-    await pub.goto(base + '/');
-    await shot(pub, '01-home');
-    await pub.click('.hero-actions >> text=Begin Your Family Experience');
-    await pub.waitForURL('**/begin');
-    await pub.fill('[name=parent_name]', 'Sarah Cohen');
-    await pub.fill('[name=email]', 'sarah.cohen@example.test');
-    await pub.check('[name=preferred_contact][value=WhatsApp]', { force: true });
-    await pub.fill('[name=destination]', 'Paris, France');
-    await pub.fill('[name=travel_start]', '2026-12-12');
-    await pub.fill('[name=travel_end]', '2026-12-22');
-    await pub.selectOption('[name=num_children]', '3');
-    await pub.fill('[name=children_ages]', '5, 3 and 1');
-    await pub.check('[name=nanny_type][value="Traveling nanny"]', { force: true });
-    await pub.fill('[name=cultural_considerations]', 'Shabbat observant family');
-    await pub.click('button[type=submit]');
-    assert.match(await pub.textContent('[data-form-error]'), /highlighted/, 'consent is required');
-    await pub.check('[name=consent]', { force: true });
-    await pub.click('button[type=submit]');
-    await pub.waitForSelector('[data-form-thanks]:not([hidden])');
-    await shot(pub, '02-inquiry-received');
-    step('inquiry submitted through the website');
-
-    // ---------------------------------------------------------------- 2. admin setup + invite
-    const adminCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-    const adm = await newPage(adminCtx);
-    await adm.goto(base + '/admin');
-    await adm.fill('[name=token]', 'test-setup-token');
-    await adm.fill('[name=name]', 'Owner Demo');
-    await adm.fill('[name=email]', 'owner@example.test');
-    await adm.fill('[name=password]', 'owner-password-123');
-    await adm.click('button[type=submit]');
-    await adm.waitForSelector('.stats');
-    await shot(adm, '03-admin-overview');
-    await adm.click('[data-nav=inquiries]');
-    await adm.click('tr[data-href] >> text=Sarah Cohen');
-    await adm.click('[data-inq-status=reviewed]');
-    await adm.waitForSelector('.toast');
-    await adm.click('[data-invite-inquiry]');
-    const link = await (await adm.waitForSelector('[data-invite-result] code')).textContent();
-    await shot(adm, '04-admin-inquiry-invited');
-    step('admin reviewed the inquiry and created a private invitation link');
-
-    // ---------------------------------------------------------------- 3. parent account
+    // ---------------------------------------------------------------- 1. family signs up
     const parentCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const par = await newPage(parentCtx);
-    await par.goto(link.replace('http://localhost', base));
-    await par.waitForSelector('[data-invite-form]:not([hidden])');
+    await par.goto(base + '/');
+    await shot(par, '01-home');
+    await par.click('.hero-actions >> text=Begin Your Family Experience');
+    await par.waitForURL('**/begin');
+    await par.fill('[name=name]', 'Sarah Cohen');
+    await par.fill('[name=email]', 'sarah.cohen@example.test');
+    await par.fill('[name=phone]', '+1 555 0101');
     await par.fill('[name=password]', 'family-password-123');
-    await par.check('[name=consent]', { force: true });
-    await shot(par, '05-parent-create-account');
     await par.click('button[type=submit]');
-    await par.waitForURL('**/portal/family');
-    await par.waitForSelector('.empty-state');
-    step('parent created an account from the invitation');
+    assert.match(await par.textContent('[data-form-error]'), /highlighted/, 'consent is required');
+    await par.check('[name=consent]', { force: true });
+    await shot(par, '02-create-account');
+    await par.click('button[type=submit]');
+    await par.waitForURL('**/portal/family#/start');
+    step('family created their own account from the website');
 
-    // ---------------------------------------------------------------- 4. steps 1–2
-    await par.click('.empty-state a.btn');
+    // ---------------------------------------------------------------- 2. steps 1–2
     await par.waitForSelector('text=Getting to Know Your Most Cherished Ones.');
     await shot(par, '06-step01-welcome');
     await par.click('text=Begin Profile');
@@ -208,6 +168,20 @@ const CHILDREN = [
     step('remaining profiles submitted together; all three show Submitted');
 
     // ---------------------------------------------------------------- 6. admin review
+    const adminCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    const adm = await newPage(adminCtx);
+    await adm.goto(base + '/admin');
+    await adm.fill('[name=token]', 'test-setup-token');
+    await adm.fill('[name=name]', 'Owner Demo');
+    await adm.fill('[name=email]', 'owner@example.test');
+    await adm.fill('[name=password]', 'owner-password-123');
+    await adm.click('button[type=submit]');
+    await adm.waitForSelector('.stats');
+    assert.equal(await adm.textContent('[data-count="review"]'), '1', 'sidebar shows one family awaiting review');
+    await shot(adm, '03-admin-overview');
+    await adm.click('[data-nav=review]');
+    await adm.waitForSelector('tr:has-text("The Cohen Family")');
+    await shot(adm, '04-admin-awaiting-review');
     await adm.click('[data-nav=families]');
     await adm.waitForSelector('tr[data-href]');
     await shot(adm, '18-admin-families');
