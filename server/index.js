@@ -123,7 +123,12 @@ for (const [route, def] of Object.entries(PAGES)) {
   });
 }
 
-app.get('/healthz', (req, res) => res.json({ ok: true, secureStorageReady: status.get().ready }));
+// Problems are configuration messages only (never secrets), shown so the owner can
+// see why secure storage is not ready without opening the hosting logs.
+app.get('/healthz', (req, res) => {
+  const s = status.get();
+  res.json({ ok: true, secureStorageReady: s.ready, problems: s.ready ? [] : s.problems, checkedAt: s.checkedAt });
+});
 app.use(express.static(path.join(ROOT, 'public'), { maxAge: config.isProduction ? '1d' : 0, index: false }));
 app.use((req, res) => res.status(404).type('html').send(renderPage({ file: 'not-found', title: 'Page Not Found — AHUVAI', noindex: true })));
 

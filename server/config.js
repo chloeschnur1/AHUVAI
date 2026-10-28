@@ -15,10 +15,22 @@ if (fs.existsSync(envFile)) {
 const env = process.env;
 const isProduction = env.NODE_ENV === 'production';
 
+// The site's public address. Uses PUBLIC_URL when set; on Render, falls back to the
+// address Render assigns (RENDER_EXTERNAL_URL). A bare domain such as
+// "portal.ahuvai.com" is treated as https://portal.ahuvai.com.
+function resolvePublicUrl() {
+  let url = (env.PUBLIC_URL || '').trim() || (env.RENDER_EXTERNAL_URL || '').trim();
+  if (!url) return `http://localhost:${env.PORT || 3000}`;
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  // Render always serves over HTTPS, so an http:// address there is a typo.
+  if (env.RENDER && /^http:\/\//i.test(url)) url = url.replace(/^http:\/\//i, 'https://');
+  return url.replace(/\/+$/, '');
+}
+
 module.exports = {
   isProduction,
   port: Number(env.PORT || 3000),
-  publicUrl: (env.PUBLIC_URL || `http://localhost:${env.PORT || 3000}`).replace(/\/$/, ''),
+  publicUrl: resolvePublicUrl(),
   databaseUrl: env.DATABASE_URL || '',
   // 'require' (verify certificate), 'no-verify' (encrypted, provider certificate not verified), or 'off'
   databaseSsl: env.DATABASE_SSL || (isProduction ? 'require' : 'off'),
